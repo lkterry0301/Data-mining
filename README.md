@@ -7,6 +7,5 @@ You are encouraged to construct two or more types of feature vectors (for instan
 
 ####Resources
 
-[Class Website](http://web.cse.ohio-state.edu/~srini/674/)
-
-[Lab 1](http://web.cse.ohio-state.edu/~srini/674/assignment1.doc)
+* [Class Website](http://web.cse.ohio-state.edu/~srini/674/)
+* [Lab 1](http://web.cse.ohio-state.edu/~srini/674/assignment1.doc)
