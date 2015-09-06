@@ -16,14 +16,15 @@ def transform_document_text_for_parsing(all_document_text):
 def get_parsed_document_tree(data_file):
     #Use BeautifulSoup Library to create a Parse Tree out of the text
     all_document_text =  data_file.read()
-    new_doc_text = transform_document_text_for_parsing(all_document_text)
-    return BeautifulSoup(new_doc_text,'xml')
+    parsable_text = transform_document_text_for_parsing(all_document_text)
+    return BeautifulSoup(parsable_text,'xml')
 
 def main():
-    for filename in os.listdir(os.getcwd()+"/data_files"):
-        current_data_file = open("data_files/"+filename, "r")
+    for filename in os.listdir(os.getcwd()+"/../data_files"):
+        current_data_file = open("../data_files/"+filename, "r")
         
-        document_tree = get_parsed_document_tree(current_data_file)
+        sgml_tree = get_parsed_document_tree(current_data_file)
+        #print sgml_tree.prettify() #ensure that the document tree is working
         
         current_data_file.close()
 
