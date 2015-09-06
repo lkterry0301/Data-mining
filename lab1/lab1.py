@@ -20,7 +20,6 @@ def get_parsed_document_tree(data_file):
     return BeautifulSoup(new_doc_text,'xml')
 
 def main():
-    visited = False
     for filename in os.listdir(os.getcwd()+"/data_files"):
         current_data_file = open("data_files/"+filename, "r")
         
