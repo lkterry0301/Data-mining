@@ -90,7 +90,7 @@ def trim_words_based_upon_frequency(dictionary):
 def print_data(filename,dictionary):
     print filename
     for key,value in dictionary.iteritems():
-        print "    "+key+" "+str(value)
+        print "    "+key+": "+str(value)
 
 
 
@@ -102,18 +102,18 @@ def add_to_class_label(reuter,dictionary):
     
     #iterate and add words to label
     for child in topics.children:
-        dictionary['topics'].append(child.text)
+        dictionary['topics'].add(child.text)
     for child in places.children:
-        dictionary['places'].append(child.text)
+        dictionary['places'].add(child.text)
     if title != None:
-        dictionary['titles'].append(title.text)
+        dictionary['titles'].add(title.text)
     
 def init_transaction_data():
     transaction_data = {'class_label': dict([]),'body':dict([])}  
     #initialize the three fields of the class label
-    transaction_data['class_label']['topics'] = []
-    transaction_data['class_label']['places'] = []
-    transaction_data['class_label']['titles'] = []  
+    transaction_data['class_label']['topics'] = set()
+    transaction_data['class_label']['places'] = set()
+    transaction_data['class_label']['titles'] = set()
     return transaction_data
     
 def main():   
@@ -131,7 +131,7 @@ def main():
         
         
         trim_words_based_upon_frequency(transaction_data['body'])
-        #print_data(filename,transaction_data['class_label'])
+        print_data(filename,transaction_data['class_label'])
         #print_data(filename,transaction_data['body'])
         
         current_data_file.close()
