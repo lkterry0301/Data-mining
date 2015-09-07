@@ -29,17 +29,19 @@ def get_word_list_and_reduce(text):
     
     #iterate through the words and check for special cases
     for i in range(len(words)-1,-1,-1):
+        word = words[i].translate(remove_punctuation_map)#remove any punctuation characters and save to temp variable. This will ensure strings like "...","'s","--",etc are removed but strings like "O'Reilly" are preserved with punctuation
         try:
-            #remove integers, floats, or any kind of number
-            float(words[i])
+            #remove integers, floats, or any kind of number. A date '9/12/2012' will be transformed to 9122012 and thus removed.
+            float(word)
             del words[i]
         except ValueError:#not a number, check other cases and perform necessary translations (like stemming) on the word
-            words[i] = stemmer.stem(words[i])
-            
-            word = words[i].translate(remove_punctuation_map)#remove any punctuation characters and save to temp variable. This will ensure strings like "...","'s","--",etc are removed but strings like "O'Reilly" are preserved with punctuation
-            #After removing punctuation, "..." maps to "", "'s" maps to "s", and "n't" maps to "nt". Remove these cases and any other 0, 1, or 2 character cases, of which there are no viable English words (other than 'I' and 'A', which are not interesting here).
+            #After removing punctuation, "..." maps to "", "'s" maps to "s", and "n't" maps to "nt". 
+            #Remove these cases and any other 0, 1, or 2 character cases, of which there are no viable English words (other than 'I' and 'A', which are not interesting here).
+            #Also, remove stop words
             if len(word) <= 2 or word in nltk.corpus.stopwords.words('english'):
                 del words[i]
+            else:
+                words[i] = stemmer.stem(words[i])
     
     return words
 
@@ -61,7 +63,12 @@ def count_words(word_list,dictionary):
         else:
             dictionary[word] += 1
     
-def trim_words_based_upon_frequency(dictionary):
+def trim_words_based_upon_frequency(dictionary):    
+    #print "Before frequency based trimming "
+    #print "There are "+str(len(dictionary))+" unique words"
+    #print "The minimum is: "+str(min(dictionary.values()) )
+    #print "The maximum is: "+str(max(dictionary.values()) )
+    
     max_val = max(dictionary.values())
     threshold = .01
     
@@ -73,41 +80,62 @@ def trim_words_based_upon_frequency(dictionary):
         #remove extremely infrequent words
         elif dictionary[key] < (max_val*threshold):
             del dictionary[key]
-
-def print_data(dictionary):
-    for key,value in dictionary.iteritems():
-        print key+" "+str(value)
-
-
-def main():
-    transaction_data = {'class_label': dict([]),'body':dict([])}
+            
     
+    #print "After frequency based trimming "
+    #print "There are "+str(len(dictionary))+" unique words"
+    #print "The minimum is: "+str(min(dictionary.values()) )
+    #print "The maximum is: "+str(max(dictionary.values()) )
+
+def print_data(filename,dictionary):
+    print filename
+    for key,value in dictionary.iteritems():
+        print "    "+key+" "+str(value)
+
+
+
+def add_to_class_label(reuter,dictionary):
+    #get relevant fields from the REUTERS tag
+    topics = reuter.TOPICS
+    places = reuter.PLACES
+    title = reuter.find("TEXT").TITLE
+    
+    #iterate and add words to label
+    for child in topics.children:
+        dictionary['topics'].append(child.text)
+    for child in places.children:
+        dictionary['places'].append(child.text)
+    if title != None:
+        dictionary['titles'].append(title.text)
+    
+def init_transaction_data():
+    transaction_data = {'class_label': dict([]),'body':dict([])}  
+    #initialize the three fields of the class label
+    transaction_data['class_label']['topics'] = []
+    transaction_data['class_label']['places'] = []
+    transaction_data['class_label']['titles'] = []  
+    return transaction_data
+    
+def main():   
     for filename in os.listdir(os.getcwd()+"/../data_files"):
         current_data_file = open("../data_files/"+filename, "r")
-        sgml_tree = get_parsed_document_tree(current_data_file)       
+        sgml_tree = get_parsed_document_tree(current_data_file)    
+        transaction_data = init_transaction_data()
         
         for reuter in sgml_tree.find_all("REUTERS"):
-            #get relevant fields from the REUTERS tag
-            topics = reuter.TOPICS
-            places = reuter.PLACES
-            title = reuter.find("TEXT").TITLE
+            add_to_class_label(reuter,transaction_data['class_label'])
             
             #parse body into relevant word tokens
             body_words = get_body_words(reuter)
             count_words(body_words,transaction_data['body'])
         
+        
+        trim_words_based_upon_frequency(transaction_data['body'])
+        #print_data(filename,transaction_data['class_label'])
+        #print_data(filename,transaction_data['body'])
+        
         current_data_file.close()
     
-    print "Before frequency based trimming "
-    print "There are "+str(len(transaction_data['body']))+" unique words"
-    print "The minimum is: "+str(min(transaction_data['body'].values()) )
-    print "The maximum is: "+str(max(transaction_data['body'].values()) )
-    trim_words_based_upon_frequency(transaction_data['body'])
-    print "After frequency based trimming "
-    print "There are "+str(len(transaction_data['body']))+" unique words"
-    print "The minimum is: "+str(min(transaction_data['body'].values()) )
-    print "The maximum is: "+str(max(transaction_data['body'].values()) )
-    print_data(transaction_data['body'])
 
 #calls the main() function
 if __name__ == "__main__":
