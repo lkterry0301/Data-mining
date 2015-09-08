@@ -26,6 +26,7 @@ def get_word_list_and_reduce(text):
     words = nltk.word_tokenize(text.lower())
     stemmer = stem.porter.PorterStemmer() #porter can be switched with lancaster or snowball for different stemming variants
     remove_punctuation_map = dict((ord(char), None) for char in string.punctuation) #map string.punctuation values into Unicode. Use this as a mapping function to delete punctuation
+    cachedStopWords = stopwords.words("english") #caching stop words speeds it up a lot
     
     #iterate through the words and check for special cases
     for i in range(len(words)-1,-1,-1):
@@ -38,7 +39,7 @@ def get_word_list_and_reduce(text):
             #After removing punctuation, "..." maps to "", "'s" maps to "s", and "n't" maps to "nt". 
             #Remove these cases and any other 0, 1, or 2 character cases, of which there are no viable English words (other than 'I' and 'A', which are not interesting here).
             #Also, remove stop words
-            if len(word) <= 2 or word in nltk.corpus.stopwords.words('english'):
+            if len(word) <= 2 or word in cachedStopWords:
                 del words[i]
             else:
                 words[i] = stemmer.stem(words[i])
@@ -109,18 +110,20 @@ def add_to_class_label(reuter,dictionary):
         dictionary['titles'].add(title.text)
     
 def init_transaction_data():
-    transaction_data = {'class_label': dict([]),'body':dict([])}  
+    transaction_data = {'filename':"",'class_label': dict([]),'body':dict([])}  
     #initialize the three fields of the class label
     transaction_data['class_label']['topics'] = set()
     transaction_data['class_label']['places'] = set()
     transaction_data['class_label']['titles'] = set()
     return transaction_data
     
-def main():   
-    for filename in os.listdir(os.getcwd()+"/../data_files"):
-        current_data_file = open("../data_files/"+filename, "r")
+def get_transaction_data(directory): 
+    all_transaction_data = []
+    for filename in os.listdir(directory):
+        current_data_file = open(directory+"/"+filename, "r")
         sgml_tree = get_parsed_document_tree(current_data_file)    
         transaction_data = init_transaction_data()
+        transaction_data['filename'] = filename
         
         for reuter in sgml_tree.find_all("REUTERS"):
             add_to_class_label(reuter,transaction_data['class_label'])
@@ -131,11 +134,17 @@ def main():
         
         
         trim_words_based_upon_frequency(transaction_data['body'])
-        print_data(filename,transaction_data['class_label'])
-        #print_data(filename,transaction_data['body'])
         
+        all_transaction_data.append(transaction_data)
         current_data_file.close()
+    return all_transaction_data
     
+def main():
+    all_transaction_data = get_transaction_data(os.getcwd()+"/../data_files")
+    
+    for transaction_data in all_transaction_data
+        #print_data(transaction_data['filename'],transaction_data['class_label'])
+        #print_data(transaction_data['filename'],transaction_data['body'])
 
 #calls the main() function
 if __name__ == "__main__":
