@@ -2,10 +2,19 @@
 
 import sys
 import os
+import time
 import string
 import nltk #natural language toolkit
 from nltk import stem
+from nltk.corpus import stopwords
 from bs4 import BeautifulSoup #xml/html parser, will be used for sgml data files
+
+#global variables
+stemmer = stem.porter.PorterStemmer() #porter can be switched with lancaster or snowball for different stemming variants
+cached_stop_words = stopwords.words("english") #caching stop words speeds it up a lot
+cached_punctuation = string.punctuation
+remove_punctuation_map = dict((ord(char), None) for char in cached_punctuation) #map string.punctuation values into Unicode. Use this as a mapping function to delete punctuation
+frequency_trimming_threshold = .01
 
 def transform_document_text_for_parsing(all_document_text):
     #Parsers assume the document has a wrapper tag. The provided data files do not. So add one in after the Doctype declaration and close it at the end of the file.
@@ -22,27 +31,30 @@ def get_parsed_document_tree(data_file):
     tree = BeautifulSoup(parsable_text,'xml')#NOTE: this is an xml parse for an sgml data file. This may cause issues but appears to be working fine
     return tree
 
+def should_filter_out_word(word):
+        word_without_punc = word.translate(remove_punctuation_map)#remove any punctuation characters and save to temp variable. This will ensure strings like "...","'s","--",etc are removed but strings like "O'Reilly" are preserved with punctuation
+        try:
+            #remove integers, floats, or any kind of number. A date '9/12/2012' will be transformed to 9122012 and thus removed.
+            float(word_without_punc)
+            return True
+        except ValueError:#not a number, check other cases and perform necessary translations (like stemming) on the word
+            #After removing punctuation, "..." maps to "", "'s" maps to "s" 
+            #Remove these cases and any other 0 or 1 character cases, of which there are no viable English words (other than 'I' and 'A', which are not interesting here).
+            #Also, remove stop words
+            if len(word_without_punc) < 2 or word_without_punc in cached_stop_words:
+                return True
+            else:
+               return False
+
 def get_word_list_and_reduce(text):
     words = nltk.word_tokenize(text.lower())
-    stemmer = stem.porter.PorterStemmer() #porter can be switched with lancaster or snowball for different stemming variants
-    remove_punctuation_map = dict((ord(char), None) for char in string.punctuation) #map string.punctuation values into Unicode. Use this as a mapping function to delete punctuation
-    cachedStopWords = stopwords.words("english") #caching stop words speeds it up a lot
     
     #iterate through the words and check for special cases
     for i in range(len(words)-1,-1,-1):
-        word = words[i].translate(remove_punctuation_map)#remove any punctuation characters and save to temp variable. This will ensure strings like "...","'s","--",etc are removed but strings like "O'Reilly" are preserved with punctuation
-        try:
-            #remove integers, floats, or any kind of number. A date '9/12/2012' will be transformed to 9122012 and thus removed.
-            float(word)
+        if should_filter_out_word(words[i]):
             del words[i]
-        except ValueError:#not a number, check other cases and perform necessary translations (like stemming) on the word
-            #After removing punctuation, "..." maps to "", "'s" maps to "s", and "n't" maps to "nt". 
-            #Remove these cases and any other 0, 1, or 2 character cases, of which there are no viable English words (other than 'I' and 'A', which are not interesting here).
-            #Also, remove stop words
-            if len(word) <= 2 or word in cachedStopWords:
-                del words[i]
-            else:
-                words[i] = stemmer.stem(words[i])
+        else:
+            words[i] = stemmer.stem(words[i])
     
     return words
 
@@ -71,15 +83,16 @@ def trim_words_based_upon_frequency(dictionary):
     #print "The maximum is: "+str(max(dictionary.values()) )
     
     max_val = max(dictionary.values())
-    threshold = .01
+    max_threshold = max_val - max_val*frequency_trimming_threshold
+    min_threshold = max_val*frequency_trimming_threshold
     
     for key in dictionary.keys():
         #remove extremely frequent words
-        if dictionary[key] > (max_val - max_val*threshold):
+        if dictionary[key] >= max_threshold:
             del dictionary[key]
             
         #remove extremely infrequent words
-        elif dictionary[key] < (max_val*threshold):
+        elif dictionary[key] <= min_threshold or dictionary[key] <= 2:
             del dictionary[key]
             
     
@@ -88,12 +101,9 @@ def trim_words_based_upon_frequency(dictionary):
     #print "The minimum is: "+str(min(dictionary.values()) )
     #print "The maximum is: "+str(max(dictionary.values()) )
 
-def print_data(filename,dictionary):
-    print filename
+def print_data(dictionary):
     for key,value in dictionary.iteritems():
         print "    "+key+": "+str(value)
-
-
 
 def add_to_class_label(reuter,dictionary):
     #get relevant fields from the REUTERS tag
@@ -110,42 +120,49 @@ def add_to_class_label(reuter,dictionary):
         dictionary['titles'].add(title.text)
     
 def init_transaction_data():
-    transaction_data = {'filename':"",'class_label': dict([]),'body':dict([])}  
+    transaction_data = {'class_label': dict([]),'body':dict([])}  
     #initialize the three fields of the class label
     transaction_data['class_label']['topics'] = set()
     transaction_data['class_label']['places'] = set()
     transaction_data['class_label']['titles'] = set()
     return transaction_data
     
-def get_transaction_data(directory): 
+def get_transaction_data(directory_with_files): 
     all_transaction_data = []
-    for filename in os.listdir(directory):
-        current_data_file = open(directory+"/"+filename, "r")
-        sgml_tree = get_parsed_document_tree(current_data_file)    
-        transaction_data = init_transaction_data()
-        transaction_data['filename'] = filename
+    for filename in os.listdir(directory_with_files):
+        current_data_file = open(directory_with_files+"/"+filename, "r")
+        sgml_tree = get_parsed_document_tree(current_data_file)
         
-        for reuter in sgml_tree.find_all("REUTERS"):
+        for reuter in sgml_tree.find_all("REUTERS"):    
+            transaction_data = init_transaction_data()
+            
             add_to_class_label(reuter,transaction_data['class_label'])
             
             #parse body into relevant word tokens
             body_words = get_body_words(reuter)
             count_words(body_words,transaction_data['body'])
+            
+            if len(transaction_data['body'].keys()) == 0:
+                transaction_data['body']['arbitrary_key_to_make_non_empty'] = 1
+            
+            trim_words_based_upon_frequency(transaction_data['body'])
+            all_transaction_data.append(transaction_data)
+            
         
-        
-        trim_words_based_upon_frequency(transaction_data['body'])
-        
-        all_transaction_data.append(transaction_data)
         current_data_file.close()
+        
     return all_transaction_data
-    
-def main():
-    all_transaction_data = get_transaction_data(os.getcwd()+"/../data_files")
-    
-    for transaction_data in all_transaction_data
-        #print_data(transaction_data['filename'],transaction_data['class_label'])
-        #print_data(transaction_data['filename'],transaction_data['body'])
 
+def main():
+    start_time = time.time()
+    all_transaction_data = get_transaction_data(os.getcwd()+"/../data_files")
+    print("--- Program runs for %s seconds ---" % (time.time() - start_time))
+    
+    for transaction_data in all_transaction_data:
+        print ""
+        print_data(transaction_data['class_label'])
+        print_data(transaction_data['body'])
+        
 #calls the main() function
 if __name__ == "__main__":
     main()
