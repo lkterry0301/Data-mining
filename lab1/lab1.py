@@ -4,6 +4,7 @@ import sys
 import os
 import time
 import string
+from collections import Counter
 import math
 import nltk #natural language toolkit
 from nltk import stem
@@ -11,7 +12,7 @@ from nltk.corpus import stopwords
 from bs4 import BeautifulSoup #xml/html parser, will be used for sgml data files
 
 #global variables
-remove_threshold_for_term_freq = 20
+num_words_in_tf_idf_filter = 700
 stemmer = stem.porter.PorterStemmer() #porter can be switched with lancaster or snowball for different stemming variants
 cached_stop_words = stopwords.words("english") #caching stop words speeds it up a lot
 cached_punctuation = string.punctuation
@@ -39,13 +40,14 @@ def should_filter_out_word(word):
            return False
 
 def increment_hash(dictionary,key):
-    if key in dictionary:
-        dictionary[key] += 1
-    else:
-        dictionary[key] = 1
+    dictionary[key] = dictionary.get(key,0) + 1
     
-def get_reduced_words_with_their_counts(text,overall_word_counts):
-    words = nltk.word_tokenize(text.lower())
+def process_words(reuter, doc_counts):
+    #parse the reuter tag
+    text_tag = reuter.find("text")
+    body_text = text_tag.text
+    
+    words = nltk.word_tokenize(body_text.lower())
     words_with_count = dict([]);
     
     #iterate through the words and add to the word count if needed
@@ -53,29 +55,17 @@ def get_reduced_words_with_their_counts(text,overall_word_counts):
         if not should_filter_out_word(words[i]):
             stemmed_word = stemmer.stem(words[i])
             increment_hash(words_with_count,stemmed_word)
-            increment_hash(overall_word_counts,stemmed_word)
+    
+    for word in words_with_count.keys():
+        increment_hash(doc_counts,word)
     
     return words_with_count
 
-def document_count_of_all_words(data_matrix):
-    document_count = dict([])#all unique words
-    words = data_matrix[0] 
-    for i in range(1,len(data_matrix)):
-        for word in words:
-            if word in data_matrix[i][1]:
-                increment_hash(document_count,word)
-    return document_count
-
-def document_frequency_filtering(data_matrix):
-    print "before document freq filter "+str(len(data_matrix[0]))
-    doc_counts = document_count_of_all_words(data_matrix)
+def document_frequency_filtering(data_matrix,doc_counts):
+    print "before document freq filter # words: "+str(len(data_matrix[0]))
     words_to_remove = set()
     upper_remove_threshold_for_document_freq = (len(data_matrix) - 1) * .99
     lower_remove_threshold_for_document_freq = (len(data_matrix) - 1) * .01
-    print "upper"+str(upper_remove_threshold_for_document_freq)
-    print "lower"+str(lower_remove_threshold_for_document_freq)
-    print "total"+str(len(data_matrix) - 1)
-
 
     for key in doc_counts.keys():
         if doc_counts[key] > upper_remove_threshold_for_document_freq:
@@ -84,13 +74,7 @@ def document_frequency_filtering(data_matrix):
             words_to_remove.add(key)
     
     remove_words_from_data_matrix(words_to_remove,data_matrix)
-    print "after document freq filter "+str(len(data_matrix[0]))
-
-def get_and_count_body_words(reuter,overall_word_counts):
-    text_tag = reuter.find("text")
-    body_text = text_tag.text
-    
-    return get_reduced_words_with_their_counts(body_text,overall_word_counts)
+    print "after document freq filter # words: "+str(len(data_matrix[0]))
 
 def get_class_label(reuter):
     reuter_text = reuter.find("text")
@@ -118,17 +102,30 @@ def get_class_label(reuter):
         
     return class_label
 
-def term_frequency_filtering(data_matrix,overall_word_counts):
-    print "before term freq filter "+str(len(data_matrix[0]))
-    words_to_remove = set()
+def get_tf_idf(data_matrix,doc_counts):
+    overall_tf_idf = dict([])
     
-    for key in overall_word_counts.keys():
-        if overall_word_counts[key] < remove_threshold_for_term_freq:
-            words_to_remove.add(key)
-            del overall_word_counts[key]
+    for i in range(1,len(data_matrix)):
+        tf_idf = dict([])
+        
+        for word in data_matrix[i][1]:
+            tf_idf[word] = data_matrix[i][1][word] * math.log( (len(data_matrix)-1)/doc_counts[word] )
+        
+        best_tf_idf_list_for_this_doc = Counter(tf_idf).most_common( min(15,len(tf_idf)) )
+        for pair in best_tf_idf_list_for_this_doc:
+            overall_tf_idf[ pair[0] ] = pair[1] 
     
-    remove_words_from_data_matrix(words_to_remove,data_matrix)
-    print "after term freq filter "+str(len(data_matrix[0]))
+    
+    best_overall_tf_idf_list = Counter(overall_tf_idf).most_common( num_words_in_tf_idf_filter )
+    overall_tf_idf = dict([]) #reset the hash so that only the very best are included
+    
+    #make the list a hash
+    for pair in best_overall_tf_idf_list:
+        overall_tf_idf[ pair[0] ] = pair[1] 
+    
+    print "tf-idf # words: "+str( len(overall_tf_idf) )
+    
+    return overall_tf_idf
 
 def remove_words_from_data_matrix(words,data_matrix):
     data_matrix[0] = data_matrix[0] - words
@@ -142,10 +139,10 @@ The data matrix format is as follows:
 First row: The set of all interesting words in all the documents
 Subsequent rows: A list of length 2 representing a reuters document. The 0 index is the class label, and the 1 index is a dictionary of words ('word': word_count). If the word is not in that dictionary, then it is not found in the document.
 """
-def get_data_matrix(directory_with_files): 
+def get_feature_vectors(directory_with_files): 
     data_matrix = []
     data_matrix.append( set() ) #first row is a set of all words across all documents
-    overall_word_counts = dict([]) #used to prevent having to reiterate over the data matrix a whole bunch for each term
+    num_documents_words_occur_in = dict([])
     
     for filename in os.listdir(directory_with_files):
         current_data_file = open(directory_with_files+"/"+filename, "r")
@@ -153,7 +150,7 @@ def get_data_matrix(directory_with_files):
         
         for reuter in sgml_tree.find_all("reuters"):       
             class_label = get_class_label(reuter)
-            body_words_with_counts = get_and_count_body_words(reuter,overall_word_counts)
+            body_words_with_counts = process_words(reuter,num_documents_words_occur_in)
             
             #add document to data matrix
             data_matrix.append( [class_label,body_words_with_counts] )
@@ -161,26 +158,29 @@ def get_data_matrix(directory_with_files):
         
         current_data_file.close()
     
-    document_frequency_filtering(data_matrix)
-    #term_frequency_filtering(data_matrix,overall_word_counts)
+    tf_idf = get_tf_idf(data_matrix,num_documents_words_occur_in)
+    document_frequency_filtering(data_matrix,num_documents_words_occur_in)
     
-    return data_matrix
+    return [data_matrix,tf_idf]
 
 def main():
     start_time = time.time()
-    data_matrix = get_data_matrix(os.getcwd()+"/../data_files")
+    feature_vectors = get_feature_vectors(os.getcwd()+"/../data_files")
     print("--- Program runs for %s seconds ---" % (time.time() - start_time))
-    
     """
+    print len(feature_vectors[1])
+    print feature_vectors[1]
+    
     i=0
-    for row in data_matrix:
+    for row in feature_vectors[0]:
         print ""
         print row
         i+=1
         
-        if i>3:
+        if i>5:
             break
     """
+    
     
 #calls the main() function
 if __name__ == "__main__":
