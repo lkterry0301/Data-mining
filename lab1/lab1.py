@@ -59,7 +59,7 @@ def process_words(reuter, doc_counts):
             stemmed_word = stemmer.stem(words[i])
             increment_hash(words_with_count,stemmed_word)
     
-    for word in words_with_count.keys():
+    for word in words_with_count:
         increment_hash(doc_counts,word)
     
     return words_with_count
@@ -167,17 +167,19 @@ def main():
     start_time = time.time()
     feature_vectors = get_feature_vectors(os.getcwd()+"/../data_files")
     print("--- Feature vector creation/word extraction runs for %s seconds ---" % (time.time() - start_time))
+    print ""
     
     print feature_vectors[0]
-    print ""
-    print ""
-    print ""
-    print ""
-    print ""
-    print ""
     
-    for row in feature_vectors[1]:
-        print row
+    for i in range(0,50): #visual seperation
+        print ""
+    
+    matrix = feature_vectors[1]
+    print matrix[0] #set of all unique words
+    print ""
+    for document_index in range(1,len(matrix)):
+        print matrix[document_index][0]
+        print matrix[document_index][1]
         print ""
     
 #calls the main() function

@@ -8,8 +8,8 @@ python lab1.py
 The output to the console is 
 
 1. The length of time the program took to run.
-2. A set of 500 words representing the words in the corpus with the highest [TF-IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) scores.
-3. A data matrix where the first row is a set of all unique, interesting words in the corpus. Every subsequent row is a list of size two representing a reuters document from the corpus. The first element is the class label: a hash map/dictionary with the elements topics (set), places (set), and title (string) of a document. The second element is a hash map/dictionary with keys of interesting words in that document and values of the number of times that word appears in the document.
+2. A hash of 500 word from the corpus with the highest [TF-IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) values.
+3. A data matrix where the first row is a set of all unique, interesting words in the corpus. Every subsequent row is a list of size two representing a reuters document from the corpus. The first element is a hash map/dictionary representing the class label. Each class label has the elements: topics (set), places (set), and title (string) of a document. The second element is a hash map/dictionary of document's words and number of times that word appears in that document.
 
 ####Resources
 
