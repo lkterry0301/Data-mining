@@ -3,7 +3,7 @@
 ####Lab 1 Description
 To run this program navigate to the lab1 directory and run 
 ```
-python lab1.py
+python lab1.py #This takes about 4.5 minutes, varying depending upon your hardware
 ```
 The output to the console is 
 
