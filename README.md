@@ -1,9 +1,15 @@
 # CSE-5243 -- Intro To Data Mining
 
 ####Lab 1 Description
-The objective is to preprocess data and prepare it for automated categorization, document similarity search, and building document graphs. This assignment is the first part of a longer-term project. The objective is to give you the experience of preprocessing real data and preparing it for classification. Your objectives are to construct a refined data set composed of a feature vector and class label(s) for each article in the Reuter(s) dataset.  I would like you to use the class labels as provided in the TOPICS and PLACES tabs of each article. We will discuss the exact details of the requirements in class on Tuesday. The datasets (split among multiple (21) .sgm files) can be obtained from http://www.cse.ohio-state.edu/~srini/674/public/reuters/  (you may also directly access this through the UNIX filesystem at ~srini/WWW/674/public/reuters). The format of individual documents within the file is similar to the sample document below. 
+To run this program navigate to the lab1 directory and run 
+```
+python lab1.py
+```
+The output to the console is 
 
-You are encouraged to construct two or more types of feature vectors (for instance you could use just the titular words or the frequency of words in the body of the article, or weighted words to construct your vector -- these are 3 of the simpler ones) that we will discuss in class. More complicated strategies would be to limit the number of elements in your feature vector. You have complete choice on the programming environment as long as it will execute on the STDLINUX environment. Note – you are welcome to implement standalone code (Java or Python suggested) for this project and/or leverage free software such as Apache Lucene as long as you can concisely and precisely explain how to run the program in your report or README file.
+1. The length of time the program took to run.
+2. A set of 500 words representing the words in the corpus with the highest [TF-IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) scores.
+3. A data matrix where the first row is a set of all unique, interesting words in the corpus. Every subsequent row is a list of size two representing a reuters document from the corpus. The first element is the class label: a hash map/dictionary with the elements topics (set), places (set), and title (string) of a document. The second element is a hash map/dictionary with keys of interesting words in that document and values of the number of times that word appears in the document.
 
 ####Resources
 
