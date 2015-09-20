@@ -5,12 +5,15 @@ import os
 import time
 import string
 import math
+import json
 import nltk #natural language toolkit
 from nltk import stem
 from nltk.corpus import stopwords
 from bs4 import BeautifulSoup #xml/html parser, will be used for sgml data files
 
 #global variables
+tfidf_file = "tfidf_bag_of_words.txt"
+matrix_file = "word_data_matrix.txt"
 num_words_in_tf_idf_filter = 500
 stemmer = stem.porter.PorterStemmer() #porter can be switched with lancaster or snowball for different stemming variants
 cached_stop_words = stopwords.words("english") #caching stop words speeds it up a lot
@@ -23,7 +26,10 @@ def get_parsed_document_tree(data_file):
     tree = BeautifulSoup(all_document_text,'lxml')
     return tree
 
-def should_filter_out_word(word):
+def should_filter_out_word(word,list_of_article_topics):
+    if word in list_of_article_topics:
+        return True
+    
     try:
         #remove integers, floats, or any kind of number. A date '9/12/2012' will be transformed to 9122012 and thus removed.
         int(word)
@@ -43,7 +49,7 @@ def increment_hash(dictionary,key):
 def sorted_dict_as_list(d):
     return sorted(d.iteritems(),key=lambda(k,v):(v,k))
     
-def process_words(reuter, doc_counts):
+def process_words(reuter, doc_counts,list_of_article_topics):
     #parse the reuter tag
     text_tag = reuter.find("text")
     body_text = text_tag.text
@@ -52,10 +58,10 @@ def process_words(reuter, doc_counts):
     words_with_count = dict([]);
     
     #iterate through the words and add to the word count if needed
-    for i in range(len(words)-1, -1,-1):    
+    for i in range(len(words)-1, -1,-1):
         words[i] = words[i].translate(remove_punctuation_map)
         
-        if not should_filter_out_word(words[i]):
+        if not should_filter_out_word(words[i],list_of_article_topics):
             stemmed_word = stemmer.stem(words[i])
             increment_hash(words_with_count,stemmed_word)
     
@@ -87,20 +93,20 @@ def get_class_label(reuter):
     
     #init the class label dictionary
     class_label = dict([])
-    class_label['topics'] = set()
-    class_label['places'] = set()
+    class_label['topics'] = []
+    class_label['places'] = []
     class_label['title'] = ""
     
     #iterate and add words to label
     if topics != None:
         for child in topics.children:
-            class_label['topics'].add(child.text)
+            class_label['topics'].append(child.text)
     if places != None:
         for child in places.children:
-            class_label['places'].add(child.text)
+            class_label['places'].append(child.text)
     if title != None:
-        class_label['title']=title.text
-        
+        class_label['title'] = title.text
+    
     return class_label
 
 def get_tf_idf(data_matrix,doc_counts):
@@ -150,7 +156,7 @@ def get_feature_vectors(directory_with_files):
         
         for reuter in sgml_tree.find_all("reuters"):       
             class_label = get_class_label(reuter)
-            body_words_with_counts = process_words(reuter,num_documents_words_occur_in)
+            body_words_with_counts = process_words(reuter, num_documents_words_occur_in, class_label['topics']) #remove words that were in the 'topics' class label
             
             #add document to data matrix
             data_matrix.append( [class_label,body_words_with_counts] )
@@ -164,23 +170,25 @@ def get_feature_vectors(directory_with_files):
     return [tf_idf,data_matrix]
 
 def main():
+    if os.path.exists(tfidf_file): #remove previous data if they exist
+        os.remove(tfidf_file)
+    if os.path.exists(matrix_file):
+        os.remove(matrix_file)
+    
+    output_tfidf = open(tfidf_file,'w')
+    output_matrix = open(matrix_file,'w')
+    
     start_time = time.time()
     feature_vectors = get_feature_vectors(os.getcwd()+"/../data_files")
-    print("--- Feature vector creation/word extraction runs for %s seconds ---" % (time.time() - start_time))
-    print ""
+    print("Word extraction runs for %s seconds. Now printing data... " % (time.time() - start_time))
     
-    print feature_vectors[0]
+    #print words with highest tfidf values in corpus
+    json.dump(feature_vectors[0],output_tfidf)
     
-    for i in range(0,50): #visual seperation
-        print ""
-    
-    matrix = feature_vectors[1]
-    print matrix[0] #set of all unique words
-    print ""
-    for document_index in range(1,len(matrix)):
-        print matrix[document_index][0]
-        print matrix[document_index][1]
-        print ""
+    #print data matrix
+    json.dump(list(feature_vectors[1][0]),output_matrix) #all unique, interesting words in corpus
+    for i in range(1,len(feature_vectors[1])): #transactional data representation of every file
+        json.dump(feature_vectors[1][i],output_matrix)
     
 #calls the main() function
 if __name__ == "__main__":
