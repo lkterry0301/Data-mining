@@ -146,11 +146,16 @@ First row: The set of all interesting words in all the documents
 Subsequent rows: A list of length 2 representing a reuters document. The 0 index is the class label, and the 1 index is a dictionary of words ('word': word_count). If the word is not in that dictionary, then it is not found in the document.
 """
 def get_feature_vectors(directory_with_files): 
+    start_time = time.time()
+    print("Starting word extraction...")
+    
     data_matrix = []
     data_matrix.append( set() ) #first row is a set of all words across all documents
     num_documents_words_occur_in = dict([])
     
     for filename in os.listdir(directory_with_files):
+        print("Extracting from file "+directory_with_files+"/"+filename)
+        
         current_data_file = open(directory_with_files+"/"+filename, "r")
         sgml_tree = get_parsed_document_tree(current_data_file)
         
@@ -167,9 +172,13 @@ def get_feature_vectors(directory_with_files):
     tf_idf = get_tf_idf(data_matrix,num_documents_words_occur_in)
     document_frequency_filtering(data_matrix,num_documents_words_occur_in)
     
+    print("Word extraction ran for %s seconds. " % (time.time() - start_time))
+
     return [tf_idf,data_matrix]
 
-def main():
+def print_feature_vectors_to_files(feature_vectors):
+    print("Printing extracted words to "+tfidf_file+" and "+matrix_file)
+    
     if os.path.exists(tfidf_file): #remove previous data if they exist
         os.remove(tfidf_file)
     if os.path.exists(matrix_file):
@@ -177,10 +186,6 @@ def main():
     
     output_tfidf = open(tfidf_file,'w')
     output_matrix = open(matrix_file,'w')
-    
-    start_time = time.time()
-    feature_vectors = get_feature_vectors(os.getcwd()+"/../data_files")
-    print("Word extraction runs for %s seconds. Now printing data... " % (time.time() - start_time))
     
     #print words with highest tfidf values in corpus
     json.dump(feature_vectors[0],output_tfidf)
@@ -190,6 +195,12 @@ def main():
     for i in range(1,len(feature_vectors[1])): #transactional data representation of every file
         json.dump(feature_vectors[1][i],output_matrix)
     
+    print("Printing words finished")
+
+def main():
+    feature_vectors = get_feature_vectors(os.getcwd()+"/../data_files")
+    print_feature_vectors_to_files(feature_vectors)    
+
 #calls the main() function
 if __name__ == "__main__":
     main()
