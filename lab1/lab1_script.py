@@ -12,8 +12,8 @@ from nltk.corpus import stopwords
 from bs4 import BeautifulSoup #xml/html parser, will be used for sgml data files
 
 #global variables
-tfidf_file = "tfidf_bag_of_words.txt"
-matrix_file = "word_data_matrix.txt"
+tfidf_file = "tfidf_bag_of_words.dat"
+matrix_file = "word_data_matrix.dat"
 num_words_in_tf_idf_filter = 500
 stemmer = stem.porter.PorterStemmer() #porter can be switched with lancaster or snowball for different stemming variants
 cached_stop_words = stopwords.words("english") #caching stop words speeds it up a lot
@@ -191,9 +191,13 @@ def print_feature_vectors_to_files(feature_vectors):
     json.dump(feature_vectors[0],output_tfidf)
     
     #print data matrix
+    feature_vectors[1][0] = list(feature_vectors[1][0])#set is not json serializable
+    json.dump(feature_vectors[1],output_matrix)
+    """
     json.dump(list(feature_vectors[1][0]),output_matrix) #all unique, interesting words in corpus
     for i in range(1,len(feature_vectors[1])): #transactional data representation of every file
         json.dump(feature_vectors[1][i],output_matrix)
+    """
     
     print("Printing words finished")
 
