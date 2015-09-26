@@ -12,9 +12,8 @@ from nltk.corpus import stopwords
 from bs4 import BeautifulSoup #xml/html parser, will be used for sgml data files
 
 #global variables
-tfidf_file = os.getcwd()+"/../feature_vectors/tfidf_bag_of_words.dat"
+tfidf_file = os.getcwd()+"/../feature_vectors/words_reduced_down_by_tfidf.dat"
 matrix_file = os.getcwd()+"/../feature_vectors/word_data_matrix.dat"
-num_words_in_tf_idf_filter = 500
 stemmer = stem.porter.PorterStemmer() #porter can be switched with lancaster or snowball for different stemming variants
 cached_stop_words = stopwords.words("english") #caching stop words speeds it up a lot
 cached_punctuation = string.punctuation
@@ -142,12 +141,14 @@ def get_tf_idf(data_matrix,doc_counts):
     
     print("Filtering TF-IDF values")
     #reduce the number of words found via tfidf
-    cutoff_tfidf = highest_tfidf_score - (highest_tfidf_score - lowest_tfidf_score_of_the_top_tfidf_scores)/2.0
+    
+    cutoff_tfidf =  lowest_tfidf_score_of_the_top_tfidf_scores + 0.05 * (highest_tfidf_score - lowest_tfidf_score_of_the_top_tfidf_scores)
     for list_item in overall_tf_idf:
         document_tfidf_dict = list_item[1]
         for word in document_tfidf_dict.keys():
             if document_tfidf_dict[word] < cutoff_tfidf:
                del document_tfidf_dict[word]
+    
     print("Finished TF-IDF feature vector")
     return overall_tf_idf
 
@@ -187,10 +188,11 @@ def get_feature_vectors(directory_with_files):
         
         current_data_file.close()
     
-    tf_idf = get_tf_idf(data_matrix,num_documents_words_occur_in)
     document_frequency_filtering(data_matrix,num_documents_words_occur_in)
+    tf_idf = get_tf_idf(data_matrix,num_documents_words_occur_in)
     
-    print("Word extraction ran for %s seconds. " % (time.time() - start_time))    
+    print("Word extraction ran for %s seconds. " % (time.time() - start_time))
+    print_num_words_in_feature_vectors(tf_idf,data_matrix)
     print_feature_vectors_to_files( [tf_idf,data_matrix] )
     return [tf_idf,data_matrix]
 
@@ -214,6 +216,15 @@ def print_feature_vectors_to_files(feature_vectors):
     
     print("Printing words finished")
 
+def print_num_words_in_feature_vectors(tfidf,data_matrix):
+    words_in_tfidf = set()
+    
+    for row in tfidf:
+        for key in row[1].keys():
+            words_in_tfidf.add( key )
+    
+    print "Num words in TF-IDF data = "+str(len(words_in_tfidf))
+    print "Num words in data matrix = "+str(len(data_matrix[0]))
 def main():
     feature_vectors = get_feature_vectors(os.getcwd()+"/../data_files") 
     for vector in feature_vectors:

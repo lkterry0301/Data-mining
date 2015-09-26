@@ -6,7 +6,8 @@ import imp
 from sklearn.neighbors import NearestNeighbors
 
 lab1_dir = os.getcwd()+"/../lab1"
-feature_vector_dir = os.getcwd()+"/../feature_vectors"
+tfidf_dat_path = os.getcwd()+"/../feature_vectors/words_reduced_down_by_tfidf.dat"
+data_matrix_dat_path = os.getcwd()+"/../feature_vectors/word_data_matrix.dat"
 original_data_files_directory = os.getcwd()+"/../data_files"
 
 """
@@ -33,28 +34,40 @@ clf = clf.fit(X, Y)
 def get_feature_vectors():
     feature_vectors = list()
     
-    #look to see if dat files exist and we can read in the data, instead of having to run parse words
-    for filename in os.listdir(feature_vector_dir):
-        if filename.endswith('.dat'): #parse that data file
-            current_data_file = open(feature_vector_dir+"/"+filename, "r")
-            feature_vectors.append( json.loads( current_data_file.read() ) )
-            current_data_file.close()
-            
-            print("No need to re-parse original Reuters data, read preconstructed word data from lab1. Filename: "+filename+" ")
+    if os.path.exists(tfidf_dat_path) and os.path.exists(data_matrix_dat_path):
+        tfidf_file = open(tfidf_dat_path, "r")
+        data_matrix_file = open(data_matrix_dat_path, "r")
+
+        feature_vectors.append( json.loads( tfidf_file.read() ) )
+        feature_vectors.append( json.loads( data_matrix_file.read() ) )
+
+        tfidf_file.close()
+        data_matrix_file.close()
     
-    #no dat files were found, thus need to parse the data using lab1
-    if( len(feature_vectors) == 0):
+        print("No need to re-parse original Reuters data, read parsed word data from previous lab1 run. ")
+    else:
         feature_vectors = run_lab1_feature_vector_extraction()
     
     return feature_vectors
 
 def run_lab1_feature_vector_extraction():
-    
+    print("No .dat files found. Must run lab1 to parse data.")
     lab1 = imp.load_source('lab1_script', lab1_dir+"/lab1_script.py")
     return lab1.get_feature_vectors(original_data_files_directory)
 
 def main():
     feature_vectors = get_feature_vectors()
+    tfidf = feature_vectors[0]
+    data_matrix = feature_vectors[1]
+    
+    words_in_tfidf = set()
+    
+    for row in tfidf:
+        for key in row[1].keys():
+            words_in_tfidf.add( key )
+    
+    print "Num words in TFIDF data = "+str(len(words_in_tfidf))
+    print "Num words in data matrix = "+str(len(data_matrix[0]))
 
 #calls the main() function
 if __name__ == "__main__":
