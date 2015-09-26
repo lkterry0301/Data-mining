@@ -5,7 +5,8 @@ import os
 import imp
 from sklearn.neighbors import NearestNeighbors
 
-lab1_dir = os.getcwd()+"/../lab1/"
+lab1_dir = os.getcwd()+"/../lab1"
+feature_vector_dir = os.getcwd()+"/../feature_vectors"
 original_data_files_directory = os.getcwd()+"/../data_files"
 
 """
@@ -33,9 +34,9 @@ def get_feature_vectors():
     feature_vectors = list()
     
     #look to see if dat files exist and we can read in the data, instead of having to run parse words
-    for filename in os.listdir(lab1_dir):
+    for filename in os.listdir(feature_vector_dir):
         if filename.endswith('.dat'): #parse that data file
-            current_data_file = open(lab1_dir+"/"+filename, "r")
+            current_data_file = open(feature_vector_dir+"/"+filename, "r")
             feature_vectors.append( json.loads( current_data_file.read() ) )
             current_data_file.close()
             
@@ -47,15 +48,9 @@ def get_feature_vectors():
     
     return feature_vectors
 
-#assumes there is only 1 python file in the lab1 directory
 def run_lab1_feature_vector_extraction():
-    lab1_filename = ''
     
-    for filename in os.listdir(lab1_dir):
-        if filename.endswith('.py'): #parse that data file
-            lab1_filename = filename
-    
-    lab1 = imp.load_source('lab1_script', lab1_dir+"/"+lab1_filename)
+    lab1 = imp.load_source('lab1_script', lab1_dir+"/lab1_script.py")
     return lab1.get_feature_vectors(original_data_files_directory)
 
 def main():
