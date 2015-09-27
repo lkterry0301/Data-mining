@@ -12,7 +12,8 @@ from nltk.corpus import stopwords
 from bs4 import BeautifulSoup #xml/html parser, will be used for sgml data files
 
 #global variables
-tfidf_file = os.getcwd()+"/../feature_vectors/words_reduced_down_by_tfidf.dat"
+tfidf_big_file = os.getcwd()+"/../feature_vectors/words_reduced_down_by_tfidf.dat"
+tfidf_small_file = os.getcwd()+"/../feature_vectors/words_reduced_more_stringently_by_tfidf.dat"
 matrix_file = os.getcwd()+"/../feature_vectors/word_data_matrix.dat"
 stemmer = stem.porter.PorterStemmer() #porter can be switched with lancaster or snowball for different stemming variants
 cached_stop_words = stopwords.words("english") #caching stop words speeds it up a lot
@@ -112,7 +113,8 @@ def get_class_label(reuter):
     
     return class_label
 
-def get_tf_idf(data_matrix,doc_counts):
+#cutoff threshold should be around 0.05
+def get_tf_idf(data_matrix,doc_counts,cutoff_threshold):
     print("Constructing a feature vector using word TF-IDF values")
     overall_tf_idf = list()
     highest_tfidf_score = 0.0
@@ -142,7 +144,7 @@ def get_tf_idf(data_matrix,doc_counts):
     print("Filtering TF-IDF values")
     #reduce the number of words found via tfidf
     
-    cutoff_tfidf =  lowest_tfidf_score_of_the_top_tfidf_scores + 0.05 * (highest_tfidf_score - lowest_tfidf_score_of_the_top_tfidf_scores)
+    cutoff_tfidf =  lowest_tfidf_score_of_the_top_tfidf_scores + cutoff_threshold * (highest_tfidf_score - lowest_tfidf_score_of_the_top_tfidf_scores)
     for list_item in overall_tf_idf:
         document_tfidf_dict = list_item[1]
         for word in document_tfidf_dict.keys():
@@ -160,6 +162,7 @@ def remove_words_from_data_matrix(words,data_matrix):
                 del data_matrix[i][1][word]
 
 """
+Returns a 2 element list, where the second element is a data matrix of words and the first element is a reduced matrix using TF-IDF values
 The data matrix format is as follows:
 First row: The set of all interesting words in all the documents
 Subsequent rows: A list of length 2 representing a reuters document. The 0 index is the class label, and the 1 index is a dictionary of words ('word': word_count). If the word is not in that dictionary, then it is not found in the document.
@@ -189,42 +192,52 @@ def get_feature_vectors(directory_with_files):
         current_data_file.close()
     
     document_frequency_filtering(data_matrix,num_documents_words_occur_in)
-    tf_idf = get_tf_idf(data_matrix,num_documents_words_occur_in)
+    tf_idf_big = get_tf_idf(data_matrix,num_documents_words_occur_in,0.05)
+    tf_idf_small = get_tf_idf(data_matrix,num_documents_words_occur_in,0.07)
     
     print("Word extraction ran for %s seconds. " % (time.time() - start_time))
-    print_num_words_in_feature_vectors(tf_idf,data_matrix)
-    print_feature_vectors_to_files( [tf_idf,data_matrix] )
-    return [tf_idf,data_matrix]
+    print_num_words_in_feature_vectors(data_matrix,tf_idf_big,tf_idf_small)
+    print_feature_vectors_to_files( data_matrix,tf_idf_big,tf_idf_small )
+    return [data_matrix,tf_idf_big,tf_idf_small]
 
-def print_feature_vectors_to_files(feature_vectors):
-    print("Printing extracted words to "+tfidf_file+" and "+matrix_file)
+def print_feature_vectors_to_files(data_matrix,tfidf_big,tfidf_small):
+    print("Printing extracted words to "+tfidf_big_file+", "+tfidf_small_file+", and "+matrix_file)
     
-    if os.path.exists(tfidf_file): #remove previous data if they exist
-        os.remove(tfidf_file)
+    if os.path.exists(tfidf_big_file): #remove previous data if they exist
+        os.remove(tfidf_big_file)
+    if os.path.exists(tfidf_small_file):
+        os.remove(tfidf_small_file)
     if os.path.exists(matrix_file):
         os.remove(matrix_file)
     
-    output_tfidf = open(tfidf_file,'w')
+    output_tfidf_big = open(tfidf_big_file,'w')
+    output_tfidf_small = open(tfidf_small_file,'w')
     output_matrix = open(matrix_file,'w')
     
-    #print words with highest tfidf values 
-    json.dump(feature_vectors[0],output_tfidf)
+    #print data matrix 
+    data_matrix[0] = list(data_matrix[0])#set is not json serializable.
+    json.dump(data_matrix,output_matrix)
     
-    #print data matrix    
-    feature_vectors[1][0] = list(feature_vectors[1][0])#set is not json serializable.
-    json.dump(feature_vectors[1],output_matrix)
+    #print words with highest tfidf values
+    json.dump(tfidf_big,output_tfidf_big)
+    json.dump(tfidf_small,output_tfidf_small)
     
     print("Printing words finished")
 
-def print_num_words_in_feature_vectors(tfidf,data_matrix):
-    words_in_tfidf = set()
-    
-    for row in tfidf:
+def print_num_words_in_feature_vectors(data_matrix,tfidf_big,tfidf_small):
+    words_in_tfidf_big = set()
+    words_in_tfidf_small = set()
+    for row in tfidf_big:
         for key in row[1].keys():
-            words_in_tfidf.add( key )
+            words_in_tfidf_big.add( key )
     
-    print "Num words in TF-IDF data = "+str(len(words_in_tfidf))
+    for row in tfidf_small:
+        for key in row[1].keys():
+            words_in_tfidf_small.add( key )
+    
     print "Num words in data matrix = "+str(len(data_matrix[0]))
+    print "Num words in first TF-IDF data = "+str(len(words_in_tfidf_big))
+    print "Num words in second (more filtered) TF-IDF data = "+str(len(words_in_tfidf_small))
 def main():
     feature_vectors = get_feature_vectors(os.getcwd()+"/../data_files") 
     for vector in feature_vectors:
