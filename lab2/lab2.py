@@ -5,7 +5,7 @@ import sys
 import os
 import imp
 from sklearn import tree
-from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import KDTree
 
 lab1 = imp.load_source('lab1_script', os.getcwd()+"/../lab1/lab1_script.py")
 tfidf_big_dat_path = os.getcwd()+"/../feature_vectors/words_reduced_down_by_tfidf.dat"
@@ -29,33 +29,71 @@ def get_KNN_classifier(tfidf_data):
     print ""
 
 #returns a searchable decision tree and a list of words that was used to create training samples in order for that tree (this will be needed for the test data)
-def get_decision_tree(tfidf_data):
+def get_decision_tree(tfidf_data, unique_words_in_tfidf_data, unique_class_labels):
     print "Building decision tree"
     start_time = time.time()
     
     training_samples = list()
     class_labels = list()
-    unique_words = list( get_unique_words_in_tfidf_data(tfidf_data) )
-    for row in tfidf_data:
-        #get the tfidf values of each unique word for every document. If word is not found in document then set value to 0.
-        row_training_samples = list()
-        for word in unique_words:
-            row_training_samples.append(row[1].get(word,0))
-        #add row data to overall data
-        training_samples.append(row_training_samples)
-        class_labels.append(row[0]['topics'])
+    
+    for document in tfidf_data:
+        #transform the class labels to int's using the overall class labels
+        doc_class_label = list()
+        if len(document[0]['topics']) == 0:#no/empty class label
+                doc_class_label.append( unique_class_labels.index('') )            
+        else:
+            for topic in document[0]['topics']:
+                doc_class_label.append( unique_class_labels.index(topic) )
+        class_labels.append(doc_class_label)
+        
+        #convert words in each document to a vector and add to training samples
+        doc_training_samples = vectorize_document_words(document[1],unique_words_in_tfidf_data)
+        training_samples.append(doc_training_samples)
+    
     clf = tree.DecisionTreeClassifier()
-    clf = clf.fit(training_samples, class_labels)
+    clf = clf.fit(training_samples, class_labels )
     
     print("Decision Tree creation ran for %s seconds. " % (time.time() - start_time))
-    return [clf,unique_words]
+    return clf
 
 def get_unique_words_in_tfidf_data(tfidf_data):
     words = set()
-    for row in tfidf_data:
-        for key in row[1]:
+    for doc in tfidf_data:
+        for key in doc[1]:
             words.add(key)
-    return words
+    return list(words)
+
+def vectorize_document_words(word_dict,all_unique_words_across_docs):
+    word_vector = list()
+    for word in all_unique_words_across_docs:
+        word_vector.append(word_dict.get(word,0))
+    return word_vector
+
+def get_unique_class_labels_in_tfidf_data(tfidf_data):
+    words = set()
+    for doc in tfidf_data:
+        for topic in doc[0]['topics']:
+            words.add(topic)
+    return ['']+list(words) #prepend empty class label
+"""
+    count = 0
+    topics_dict = dict([])
+    
+    #convert 'topic' keywords into a vector where each word has an incremental int associated with it
+    for doc in tfidf_data:
+        if len(doc[0]['topics']) == 0: #docs has no class label
+            topic = "CLASS_WITH_NO_TOPIC_LABELS"
+            if(topics_dict.get(topic,-1) == -1):#word is not in hash yet
+                topics_dict[topic] = count
+                count = count + 1
+        else:
+            for topic in doc[0]['topics']:#docs with a class label
+                if(topics_dict.get(topic,-1) == -1):#word is not in hash yet
+                    topics_dict[topic] = count
+                    count = count + 1
+    #return the list
+    return topics_dict
+"""
 
 def load_feature_vectors_from_files():
     feature_vectors = list()
@@ -94,10 +132,19 @@ def main():
     tfidf_smaller = feature_vectors[1]
     
     #build classifiers for big tfidf data
-    tfidf_big_decision_tree_values = get_decision_tree(tfidf_larger)
+    all_words_in_tfidf_larger = get_unique_words_in_tfidf_data(tfidf_larger)
+    tfidf_larger_class_labels = get_unique_class_labels_in_tfidf_data(tfidf_larger)
+    tfidf_big_decision_tree = get_decision_tree( tfidf_larger, all_words_in_tfidf_larger, tfidf_larger_class_labels )
+    for doc in tfidf_larger:
+        query = vectorize_document_words(doc[1],all_words_in_tfidf_larger)#first doc's word hash
+        prediction = tfidf_big_decision_tree.predict(query)
+        print prediction
     
     #build classifiers for small tfidf data
-    tfidf_small_decision_tree_values = get_decision_tree(tfidf_smaller)
+    all_words_in_tfidf_smaller = get_unique_words_in_tfidf_data(tfidf_smaller)
+    tfidf_smaller_class_labels = get_unique_class_labels_in_tfidf_data(tfidf_smaller)
+    tfidf_small_decision_tree = get_decision_tree( tfidf_smaller, all_words_in_tfidf_smaller, tfidf_smaller_class_labels )
+    
 
 #calls the main() function
 if __name__ == "__main__":
