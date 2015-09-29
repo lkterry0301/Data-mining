@@ -124,6 +124,16 @@ def run_lab1_feature_vector_extraction():
     print("No .dat files found. Must run lab1 to parse data.")
     return lab1.get_feature_vectors(original_data_files_directory)
 
+def pretty_print_prediction(all_class_labels,prediction):
+    classes = ''
+    index_of_none_class = all_class_labels.index('')
+    for class_index in prediction[0]:
+        if class_index == index_of_none_class:
+            classes = "NONE TOPIC" + ", "+classes  
+        else:
+            classes = all_class_labels[class_index] +", "+classes                
+    print "Class: "+classes[:-2] #remove comma and space from the end of string
+
 def main():
     #get the feature vectors
     feature_vectors = get_feature_vectors()
@@ -138,7 +148,7 @@ def main():
     for doc in tfidf_larger:
         query = vectorize_document_words(doc[1],all_words_in_tfidf_larger)#first doc's word hash
         prediction = tfidf_big_decision_tree.predict(query)
-        print prediction
+        pretty_print_prediction(tfidf_larger_class_labels,prediction)
     
     #build classifiers for small tfidf data
     all_words_in_tfidf_smaller = get_unique_words_in_tfidf_data(tfidf_smaller)
