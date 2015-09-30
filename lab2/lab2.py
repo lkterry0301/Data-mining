@@ -14,7 +14,7 @@ data_matrix_dat_path = os.getcwd()+"/../feature_vectors/word_data_matrix.dat"
 original_data_files_directory = os.getcwd()+"/../data_files"
 
 def get_KNN_classifier(tfidf_data,unique_words_in_tfidf_data,unique_class_labels):
-    print "Building KNN Classifier"
+    print "Building KNN Classifier  ("+str(len(unique_words_in_tfidf_data))+" words)"
     start_time = time.time()
     
     training_samples,class_labels = get_traning_samples_and_class_labels_vectors(tfidf_data, unique_words_in_tfidf_data, unique_class_labels)
@@ -27,7 +27,7 @@ def get_KNN_classifier(tfidf_data,unique_words_in_tfidf_data,unique_class_labels
 
 #returns a searchable decision tree and a list of words that was used to create training samples in order for that tree (this will be needed for the test data)
 def get_decision_tree(tfidf_data, unique_words_in_tfidf_data, unique_class_labels):
-    print "Building decision tree"
+    print "Building decision tree ("+str(len(unique_words_in_tfidf_data))+" words)"
     start_time = time.time()
     
     training_samples,class_labels = get_traning_samples_and_class_labels_vectors(tfidf_data, unique_words_in_tfidf_data, unique_class_labels)
@@ -118,18 +118,21 @@ def pretty_print_prediction(all_class_labels,prediction):
     print "Topics: "+classes[:-2] #remove comma and space from the end of string
 
 def query(tfidf_data, all_words_in_tfidf_data, all_class_labels_in_tfidf_data, classifier):
-    for i in range (0,30):
+    num_queries = 500
+    start_time = time.time()
+    for i in range (0,num_queries):
         doc = tfidf_data[i]
         query = vectorize_document_words(doc[1],all_words_in_tfidf_data)#first doc's word hash
         prediction = classifier.predict(query)
-        pretty_print_prediction(all_class_labels_in_tfidf_data,prediction)
+        #pretty_print_prediction(all_class_labels_in_tfidf_data,prediction)
+    print "Average query runs for " + str( (time.time() - start_time)/num_queries ) + " seconds. "
 
 def main():
     #get the feature vectors
     feature_vectors = get_feature_vectors()
     data_matrix = feature_vectors[0]
     tfidf_larger = feature_vectors[1]
-    tfidf_smaller = feature_vectors[1]
+    tfidf_smaller = feature_vectors[2]
     
     #find unique words in tfidf data and unique topics in their class labels
     all_words_in_tfidf_larger = get_unique_words_in_tfidf_data(tfidf_larger)
