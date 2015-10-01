@@ -13,7 +13,7 @@ tfidf_small_dat_path = os.getcwd()+"/../feature_vectors/words_reduced_more_strin
 data_matrix_dat_path = os.getcwd()+"/../feature_vectors/word_data_matrix.dat"
 original_data_files_directory = os.getcwd()+"/../data_files"
 
-def get_KNN_classifier(tfidf_data,unique_words_in_tfidf_data,unique_class_labels):
+def get_KNN_classifier(tfidf_data, unique_words_in_tfidf_data, unique_class_labels):
     print "Building KNN Classifier  ("+str(len(unique_words_in_tfidf_data))+" words)"
     start_time = time.time()
     
@@ -116,7 +116,7 @@ def pretty_print_prediction(all_class_labels,prediction):
         else:
             classes = all_class_labels[class_index] +", "+classes                
     print "Topics: "+classes[:-2] #remove comma and space from the end of string
-
+"""
 def query(tfidf_data, all_words_in_tfidf_data, all_class_labels_in_tfidf_data, classifier):
     num_queries = 500
     start_time = time.time()
@@ -126,6 +126,68 @@ def query(tfidf_data, all_words_in_tfidf_data, all_class_labels_in_tfidf_data, c
         prediction = classifier.predict(query)
         #pretty_print_prediction(all_class_labels_in_tfidf_data,prediction)
     print "Average query runs for " + str( (time.time() - start_time)/num_queries ) + " seconds. "
+"""
+def cross_validation_accuracy(tfidf_data, num_subsets, classifier_type):
+    num_samples_in_one_subset = len(tfidf_data) / num_subsets
+    total_query_time = 0
+    num_queries = 0
+    num_false_pos = 0
+    num_true_pos = 0
+    #rotate through subsets in the data to perform cross validation accuracy calculations
+    for current_validation_test in range(0,num_subsets):
+        pos = current_validation_test * num_samples_in_one_subset
+        
+        #use one subset for the test data, and all the other subsets for the train data
+        tfidf_test = tfidf_data[pos:(pos + num_samples_in_one_subset)]
+        print "LEN TEST: "+str(len(tfidf_test))
+        tfidf_train = tfidf_data[:pos] + tfidf_data[(pos + num_samples_in_one_subset):]
+        print "LEN TRAIN: "+str(len(tfidf_train))
+        train_unique_words = get_unique_words_in_tfidf_data(tfidf_train)
+        train_class_labels = get_unique_class_labels_in_tfidf_data(tfidf_train)
+        
+        classifier = None
+        if classifier_type.lower() == 'knn':
+            classifier = get_decision_tree(tfidf_train, train_unique_words, train_class_labels)
+        elif classifier_type.lower() == 'decision tree':
+            classifier = get_KNN_classifier(tfidf_train, train_unique_words, train_class_labels)
+        else:
+            raise ValueError('Invalid classifier name passed to Cross Validation Accuracy checking!')
+        
+        for doc in tfidf_test:
+            #run a prediction on this document using the above model
+            query = vectorize_document_words(doc[1],train_unique_words)
+            start_time = time.time()
+            prediction = classifier.predict(query)
+            total_query_time = total_query_time + (time.time() - start_time)
+            num_queries = num_queries + 1
+            
+            #determine this prediction's accuracy and keep track of overall accuracy
+            num_doc_true_pos, num_doc_false_pos = find_true_and_false_pos(doc[0]['topics'], train_class_labels, prediction)
+            num_true_pos = num_true_pos + num_doc_true_pos
+            num_false_pos = num_false_pos + num_doc_false_pos
+    
+    print "     Average query time: " + str(total_query_time/num_queries)
+    print "     Total Accuracy: " + str(num_true_pos / float(num_true_pos + num_false_pos))
+
+def find_true_and_false_pos(correct_topics, all_class_labels, prediction):
+    index_of_none_class = all_class_labels.index('')
+    
+    correct_topics_indicies = list()
+    #convert the 'correct topics' to indices of the all_class_labels list to be comparable with prediction
+    if len(correct_topics) == 0:
+        correct_topics_indicies.append(index_of_none_class)
+    else:
+        for topic in correct_topics:
+            index = all_class_labels.index(topic) if topic in all_class_labels else None
+            if index != None:
+                correct_topics_indicies.append( index )
+    
+    #find false and true positives 
+    intersection = set(correct_topics_indicies) & set(prediction[0])
+    num_true_pos = len( intersection ) #size of real intersect predicted
+    num_false_pos = len( prediction[0] ) - len(intersection) #size of prediction minus size of intersection
+    
+    return num_true_pos, num_false_pos
 
 def main():
     #get the feature vectors
@@ -141,6 +203,14 @@ def main():
     all_words_in_tfidf_smaller = get_unique_words_in_tfidf_data(tfidf_smaller)
     tfidf_smaller_class_labels = get_unique_class_labels_in_tfidf_data(tfidf_smaller)
     
+    #cross_validation_accuracy(tfidf_smaller,6,'knn')
+    #cross_validation_accuracy(tfidf_smaller,6,'decision tree')
+    
+    #cross_validation_accuracy(tfidf_larger,6,'knn')
+    cross_validation_accuracy(tfidf_larger,6,'decision tree')
+    
+    
+    """
     #build decision tree for big tfidf data
     tfidf_big_decision_tree = get_decision_tree( tfidf_larger, all_words_in_tfidf_larger, tfidf_larger_class_labels )
     query(tfidf_larger,all_words_in_tfidf_larger,tfidf_larger_class_labels,tfidf_big_decision_tree)
@@ -156,7 +226,7 @@ def main():
     #build KNN for small tfidf data
     tfidf_small_knn = get_KNN_classifier(tfidf_smaller,all_words_in_tfidf_smaller,tfidf_smaller_class_labels)
     query(tfidf_larger,all_words_in_tfidf_smaller,tfidf_smaller_class_labels,tfidf_small_knn)
-    
+    """
 #calls the main() function
 if __name__ == "__main__":
     main()

@@ -191,9 +191,9 @@ def get_feature_vectors(directory_with_files):
         
         current_data_file.close()
     
+    tf_idf_big = get_tf_idf(data_matrix,num_documents_words_occur_in,0.117)
+    tf_idf_small = get_tf_idf(data_matrix,num_documents_words_occur_in,0.122)
     document_frequency_filtering(data_matrix,num_documents_words_occur_in)
-    tf_idf_big = get_tf_idf(data_matrix,num_documents_words_occur_in,0.05)
-    tf_idf_small = get_tf_idf(data_matrix,num_documents_words_occur_in,0.07)
     
     print("Word extraction ran for %s seconds. " % (time.time() - start_time))
     print_num_words_in_feature_vectors(data_matrix,tf_idf_big,tf_idf_small)
