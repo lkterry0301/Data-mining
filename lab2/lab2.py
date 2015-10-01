@@ -10,7 +10,6 @@ from sklearn.neighbors import KNeighborsClassifier
 lab1 = imp.load_source('lab1_script', os.getcwd()+"/../lab1/lab1_script.py")
 tfidf_big_dat_path = os.getcwd()+"/../feature_vectors/words_reduced_down_by_tfidf.dat"
 tfidf_small_dat_path = os.getcwd()+"/../feature_vectors/words_reduced_more_stringently_by_tfidf.dat"
-data_matrix_dat_path = os.getcwd()+"/../feature_vectors/word_data_matrix.dat"
 original_data_files_directory = os.getcwd()+"/../data_files"
 
 def get_KNN_classifier(tfidf_data, unique_words_in_tfidf_data, unique_class_labels):
@@ -77,33 +76,31 @@ def get_unique_class_labels_in_tfidf_data(tfidf_data):
     return ['']+list(words) #prepend empty class label
 
 def load_feature_vectors_from_files():
-    feature_vectors = list()
     tfidf_big_file = open(tfidf_big_dat_path, "r")
     tfidf_small_file = open(tfidf_small_dat_path, "r")
-    data_matrix_file = open(data_matrix_dat_path, "r")
     
-    feature_vectors.append( json.loads( data_matrix_file.read() ) )
-    feature_vectors.append( json.loads( tfidf_big_file.read() ) )
-    feature_vectors.append( json.loads( tfidf_small_file.read() ) )
+    tfidf_larger = json.loads( tfidf_big_file.read() )
+    tfidf_smaller = json.loads( tfidf_small_file.read() )
     
     tfidf_big_file.close()
-    data_matrix_file.close()
     tfidf_small_file.close()
     
     print("No need to re-parse original Reuters data, read parsed word data from previous lab1 run. ")
+    print "Num words in first TF-IDF data = "+str( len(get_unique_words_in_tfidf_data(tfidf_larger)) )
+    print "Num words in second (more filtered) TF-IDF data = "+str( len(get_unique_words_in_tfidf_data(tfidf_smaller)) )
     
-    lab1.print_num_words_in_feature_vectors(feature_vectors[0],feature_vectors[1],feature_vectors[2])
-    return feature_vectors
+    return tfidf_larger,tfidf_smaller
 
 def get_feature_vectors():
-    if os.path.exists(tfidf_big_dat_path) and os.path.exists(tfidf_small_dat_path) and os.path.exists(data_matrix_dat_path):
+    if os.path.exists(tfidf_big_dat_path) and os.path.exists(tfidf_small_dat_path):
         return load_feature_vectors_from_files()
     else:
         return run_lab1_feature_vector_extraction()
 
 def run_lab1_feature_vector_extraction():
     print("No .dat files found. Must run lab1 to parse data.")
-    return lab1.get_feature_vectors(original_data_files_directory)
+    feature_vectors = lab1.get_feature_vectors(original_data_files_directory)
+    return feature_vectors[1],feature_vectors[2]
 
 def pretty_print_prediction(all_class_labels,prediction):
     classes = ''
@@ -194,10 +191,7 @@ def num_correct_and_incorrect_classes(correct_topics, all_class_labels, predicti
 def main():
     start_time = time.time()
     #get the feature vectors
-    feature_vectors = get_feature_vectors()
-    tfidf_larger = feature_vectors[1]
-    tfidf_smaller = feature_vectors[2]
-    feature_vectors = None #remove feature_vectors[0], the data matrix, from memory as it is not needed
+    tfidf_larger,tfidf_smaller = get_feature_vectors()
     
     cross_validation_accuracy(tfidf_smaller,4,'knn')
     cross_validation_accuracy(tfidf_smaller,4,'decision tree')
