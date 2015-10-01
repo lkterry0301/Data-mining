@@ -205,7 +205,7 @@ def main():
     cross_validation_accuracy(tfidf_larger,4,'knn')
     cross_validation_accuracy(tfidf_larger,4,'decision tree')
     
-    print "time to run total : "+str(time.time()  - start_time)
+    print "Total running time: "+str(time.time()  - start_time)+" seconds"
 
 #calls the main() function
 if __name__ == "__main__":
