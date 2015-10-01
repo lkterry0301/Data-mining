@@ -121,7 +121,7 @@ def cross_validation_accuracy(tfidf_data, num_subsets, classifier_type):
     total_train_num_words = 0
     num_queries = 0
     num_correct = 0
-    num_incorrect = 0
+    total_predicted = 0
     #rotate through subsets in the data to perform cross validation accuracy calculations
     for current_validation_test in range(0,num_subsets):
         pos = current_validation_test * num_samples_in_one_subset
@@ -154,9 +154,9 @@ def cross_validation_accuracy(tfidf_data, num_subsets, classifier_type):
             num_queries = num_queries + 1
             
             #determine this prediction's accuracy and keep track of overall accuracy
-            num_doc_correct, num_doc_incorrect = num_correct_and_incorrect_classes(doc[0]['topics'], train_class_labels, prediction)
+            num_doc_correct, num_doc_total_predicted = prediction_accuracy(doc[0]['topics'], train_class_labels, prediction)
             num_correct += num_doc_correct
-            num_incorrect += num_doc_incorrect
+            total_predicted += num_doc_total_predicted
         
         print "Cross validating "+classifier_type.upper()+" accuracy..."+ str(current_validation_test+1) +" out of "+str(num_subsets)+" completed!"
     
@@ -165,10 +165,10 @@ def cross_validation_accuracy(tfidf_data, num_subsets, classifier_type):
     print "     Average "+classifier_type.upper()+" classifier build time (offline): " + str(total_classifier_build_time / num_subsets)
     print "     Average num words used to train classifier: " + str(total_train_num_words / num_subsets)
     print "     Average classification time (online): " + str(total_query_time / num_queries)
-    print "     Total Accuracy (#correct classes / #correct+#incorrect): " + "{0:.5f}%".format( (num_correct / float(num_correct + num_incorrect)) * 100)
+    print "     Total Accuracy (#correct classes / #correct+#incorrect): " + "{0:.5f}%".format( (num_correct / float(total_predicted)) * 100)
     print ""
 
-def num_correct_and_incorrect_classes(correct_topics, all_class_labels, prediction):
+def prediction_accuracy(correct_topics, all_class_labels, prediction):
     index_of_none_class = all_class_labels.index('')
     
     correct_topics_indicies = list()
@@ -181,12 +181,11 @@ def num_correct_and_incorrect_classes(correct_topics, all_class_labels, predicti
             if index != None:
                 correct_topics_indicies.append( index )
     
-    #find false and true positives 
-    intersection = set(correct_topics_indicies) & set(prediction[0])
-    num_correct = len( intersection ) #size of real intersect predicted
-    num_incorrect = len(correct_topics_indicies) + len( prediction[0] ) - len(intersection) #Num missed classes + num incorrect classes - num correct classes
+    #find false and true positives
+    num_correct = len( set(correct_topics_indicies) & set(prediction[0]) )  #size of real intersect predicted
+    total = len( set(correct_topics_indicies) | set(prediction[0]) )        #Num missed classes + num incorrect classes - num correct classes = real union predicted
     
-    return num_correct, num_incorrect
+    return num_correct, total
 
 def main():
     start_time = time.time()
