@@ -1,0 +1,89 @@
+$ python lab2.py
+No need to re-parse original Reuters data, read parsed word data from previous lab1 run. 
+Num words in first TF-IDF data = 600
+Num words in second (more filtered) TF-IDF data = 199
+
+Running Cross Validation...subsets based on number of documents, not words. Thus number of training words may vary
+Building KNN Classifier  (92 words)
+Running cross validation predictions...
+Cross validating KNN accuracy...1 out of 4 completed!
+Building KNN Classifier  (176 words)
+Running cross validation predictions...
+Cross validating KNN accuracy...2 out of 4 completed!
+Building KNN Classifier  (174 words)
+Running cross validation predictions...
+Cross validating KNN accuracy...3 out of 4 completed!
+Building KNN Classifier  (166 words)
+Running cross validation predictions...
+Cross validating KNN accuracy...4 out of 4 completed!
+
+Cross Validation completed!
+     Average KNN classifier build time (offline): 1.47073453665
+     Average num words used to train classifier: 152
+     Average classification time (online): 0.00724284342584
+     Total Accuracy (#correct classes / #correct+#incorrect): 28.60572%
+
+
+Running Cross Validation...subsets based on number of documents, not words. Thus number of training words may vary
+Building decision tree (92 words)
+Running cross validation predictions...
+Cross validating DECISION TREE accuracy...1 out of 4 completed!
+Building decision tree (176 words)
+Running cross validation predictions...
+Cross validating DECISION TREE accuracy...2 out of 4 completed!
+Building decision tree (174 words)
+Running cross validation predictions...
+Cross validating DECISION TREE accuracy...3 out of 4 completed!
+Building decision tree (166 words)
+Running cross validation predictions...
+Cross validating DECISION TREE accuracy...4 out of 4 completed!
+
+Cross Validation completed!
+     Average DECISION TREE classifier build time (offline): 2.44284999371
+     Average num words used to train classifier: 152
+     Average classification time (online): 6.23723931961e-05
+     Total Accuracy (#correct classes / #correct+#incorrect): 28.62406%
+
+
+Running Cross Validation...subsets based on number of documents, not words. Thus number of training words may vary
+Building KNN Classifier  (265 words)
+Running cross validation predictions...
+Cross validating KNN accuracy...1 out of 4 completed!
+Building KNN Classifier  (524 words)
+Running cross validation predictions...
+Cross validating KNN accuracy...2 out of 4 completed!
+Building KNN Classifier  (511 words)
+Running cross validation predictions...
+Cross validating KNN accuracy...3 out of 4 completed!
+Building KNN Classifier  (516 words)
+Running cross validation predictions...
+Cross validating KNN accuracy...4 out of 4 completed!
+
+Cross Validation completed!
+     Average KNN classifier build time (offline): 2.91700673103
+     Average num words used to train classifier: 454
+     Average classification time (online): 0.0197980061787
+     Total Accuracy (#correct classes / #correct+#incorrect): 28.60651%
+
+
+Running Cross Validation...subsets based on number of documents, not words. Thus number of training words may vary
+Building decision tree (265 words)
+Running cross validation predictions...
+Cross validating DECISION TREE accuracy...1 out of 4 completed!
+Building decision tree (524 words)
+Running cross validation predictions...
+Cross validating DECISION TREE accuracy...2 out of 4 completed!
+Building decision tree (511 words)
+Running cross validation predictions...
+Cross validating DECISION TREE accuracy...3 out of 4 completed!
+Building decision tree (516 words)
+Running cross validation predictions...
+Cross validating DECISION TREE accuracy...4 out of 4 completed!
+
+Cross Validation completed!
+     Average DECISION TREE classifier build time (offline): 19.2106305361
+     Average num words used to train classifier: 454
+     Average classification time (online): 9.17879152528e-05
+     Total Accuracy (#correct classes / #correct+#incorrect): 28.67070%
+
+Total running time: 698.821732998 seconds
