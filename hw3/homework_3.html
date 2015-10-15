@@ -21,17 +21,11 @@
             */
             document.addEventListener("DOMContentLoaded",function(event){
                 //True maps to 1, false maps to 0. The third value will be normalized
-                var originalData = [[1,1,5],
-                                    [1,1,7],
-                                    [1,0,8],
-                                    [0,0,3],
-                                    [0,1,7],
-                                    [0,1,4],
-                                    [0,0,5],
-                                    [1,0,6],
-                                    [0,1,1]];
-                var normal = pointDistances([1,0,1],originalData );
-                document.getElementById("prob18_2").innerHTML = normal;
+                var carDataClassL = [25,25];
+                var carDataClassH = [20,45,20,25];
+                var output = "Class L Car Classification: "+print_car_data_calcs(carDataClassL,23) +"</br>";
+                output+="Class H Car Classification: "+print_car_data_calcs(carDataClassH,23)+"</br>";
+                document.getElementById("prob18_1").innerHTML = output;
             });
             /*
             document.addEventListener("DOMContentLoaded",function(event){
@@ -98,12 +92,9 @@
         </script>
     </head>
     <body>
-        <p id="prob1_result">
-        
-        </p>
-        <p id="prob3a_result">
-        
-        </p>
+        <p id="prob1_result"></p>
+        <p id="prob3a_result"></p>
+        <p id="prob18_1"></p>
         <p id="prob18_2"></p>
         <p id="prob19_4"></p>
         <p id="prob19_5"></p>
