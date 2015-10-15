@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href="hw_3.css" rel="stylesheet" type="text/css" />
+        
+        <script src="prob1.js"type="text/javascript"></script>
+        <script src="prob3.js"type="text/javascript"></script>
+        <script src="prob18_1.js"type="text/javascript"></script>
+        <script src="prob18_2.js"type="text/javascript"></script>
+        <script src="prob19_4.js"type="text/javascript"></script>
+        <script src="prob19_5.js"type="text/javascript"></script>
+        <script>
+            /*
+            document.addEventListener("DOMContentLoaded",function(event){
+                document.getElementById("prob1_result").innerHTML = prob1_function([2,4,10,12,3,20,30,11,25],[2,4,6]);
+            });
+            document.addEventListener("DOMContentLoaded",function(event){
+                var dendogram = build_dendogram([[1,0,1,1,0],[1,1,0,1,0],[0,0,1,1,0],[0,1,0,1,0],[1,0,1,0,1],[0,1,1,0,0]], SMC_similarity, singleLinkMinDist,find_merge_point_min)
+                document.getElementById("prob3a_result").innerHTML = dendogram;
+            });
+            */
+            document.addEventListener("DOMContentLoaded",function(event){
+                //True maps to 1, false maps to 0. The third value will be normalized
+                var originalData = [[1,1,5],
+                                    [1,1,7],
+                                    [1,0,8],
+                                    [0,0,3],
+                                    [0,1,7],
+                                    [0,1,4],
+                                    [0,0,5],
+                                    [1,0,6],
+                                    [0,1,1]];
+                var normal = pointDistances([1,0,1],originalData );
+                document.getElementById("prob18_2").innerHTML = normal;
+            });
+            /*
+            document.addEventListener("DOMContentLoaded",function(event){
+                //True maps to 1, false maps to 0. The third value will be normalized
+                var originalData = [[1,1,5],
+                                    [1,1,7],
+                                    [1,0,8],
+                                    [0,0,3],
+                                    [0,1,7],
+                                    [0,1,4],
+                                    [0,0,5],
+                                    [1,0,6],
+                                    [0,1,1]];
+                var normal = pointDistances([1,0,1],originalData );
+                document.getElementById("prob18_2").innerHTML = normal;
+            });
+            document.addEventListener("DOMContentLoaded",function(event){
+                //True maps to 1, false maps to 0. The third value will be normalized
+                 var data = [[1,1,5],
+                                    [1,1,7],
+                                    [1,0,8],
+                                    [0,0,3],
+                                    [0,1,7],
+                                    [0,1,4],
+                                    [0,0,5],
+                                    [1,0,6],
+                                    [0,1,1]];
+                var dataClasses = {};
+                dataClasses[ data[0] ] = 'Y';
+                dataClasses[ data[1] ] = 'Y';
+                dataClasses[ data[2] ] = 'N';
+                dataClasses[ data[3] ] = 'Y';
+                dataClasses[ data[4] ] = 'N';
+                dataClasses[ data[5] ] = 'N';
+                dataClasses[ data[6] ] = 'N';
+                dataClasses[ data[7] ] = 'Y';
+                dataClasses[ data[8] ] = 'N';
+                var splits = allSplitsForOriginalDataMatrix(data,dataClasses);
+                document.getElementById("prob19_4").innerHTML = splits;
+            });
+            document.addEventListener("DOMContentLoaded",function(event){
+                //True maps to 1, false maps to 0. The third value will be normalized
+                 var data = [[3.5,4],
+                                [2,4],
+                                [9.1,4.5],
+                                [2,6],
+                                [1.5,7],
+                                [7,6.5],
+                                [2.1,2.5],
+                                [8,4]];
+                var dataClasses = {};
+                dataClasses[ data[0] ] = 'H';
+                dataClasses[ data[1] ] = 'H';
+                dataClasses[ data[2] ] = 'L';
+                dataClasses[ data[3] ] = 'H';
+                dataClasses[ data[4] ] = 'H';
+                dataClasses[ data[5] ] = 'H';
+                dataClasses[ data[6] ] = 'L';
+                dataClasses[ data[7] ] = 'L';
+                var result = prob19_5(data,dataClasses);
+                document.getElementById("prob19_5").innerHTML = result;
+            });
+            */
+        </script>
+    </head>
+    <body>
+        <p id="prob1_result">
+        
+        </p>
+        <p id="prob3a_result">
+        
+        </p>
+        <p id="prob18_2"></p>
+        <p id="prob19_4"></p>
+        <p id="prob19_5"></p>
+
+    </body>
+</html>
