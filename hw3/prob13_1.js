@@ -1,5 +1,4 @@
-
-function prob1_function(datavals,means){
+function prob13_1(datavals,means){
     var classified_points = [];
 
     for(var j=0;j<means.length;j++){ //num clusters
@@ -17,7 +16,6 @@ function prob1_function(datavals,means){
         }
         classified_points[clusterIndex].push(datavals[i]);
     }
-    //return datavals +" "+ means;
     var retVal = "After one iteration of K-Means algorithm the data points are classified as follows: </br>";
 
     for(var j=0;j<classified_points.length;j++){ //num clusters
@@ -33,11 +31,4 @@ function prob1_function(datavals,means){
     }
 
     return retVal;
-}
-function mean(datavals){
-    var sum=0;
-    for(var i=0;i<datavals.length;i++){
-        sum+=datavals[i];
-    }
-    return sum/datavals.length;
 }

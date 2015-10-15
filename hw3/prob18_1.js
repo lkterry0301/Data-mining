@@ -17,28 +17,3 @@ function probability_density_func_for_normal_distribution(values,num){
     return coefficient * Math.pow(Math.E,power) ||0;
 }
 
-function standardDeviation(values){
-    var summation = sqrDiffSum(values);
-    
-    return Math.sqrt(summation / values.length);
-}
-
-function mean(values){
-    var sum = values.reduce(function(sum, value){
-      return sum + value;
-    }, 0);
-
-    return sum / values.length;
-}
-
-function sqrDiffSum(values){
-    var avg = mean(values);
-    
-    var sum = values.reduce(function(sum,value){
-      var diff = value - avg;
-      var sqr = diff * diff;
-      return sum+sqr;
-    }, 0);
-    
-    return sum;
-}

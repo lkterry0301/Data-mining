@@ -3,8 +3,10 @@
     <head>
         <link href="hw_3.css" rel="stylesheet" type="text/css" />
         
-        <script src="prob1.js"type="text/javascript"></script>
-        <script src="prob3.js"type="text/javascript"></script>
+        <script src="prob_helpers.js"type="text/javascript"></script>
+        <script src="prob13_1.js"type="text/javascript"></script>
+        <script src="prob13_3.js"type="text/javascript"></script>
+        <script src="prob14_1.js"type="text/javascript"></script>
         <script src="prob18_1.js"type="text/javascript"></script>
         <script src="prob18_2.js"type="text/javascript"></script>
         <script src="prob19_4.js"type="text/javascript"></script>
@@ -12,13 +14,27 @@
         <script>
             /*
             document.addEventListener("DOMContentLoaded",function(event){
-                document.getElementById("prob1_result").innerHTML = prob1_function([2,4,10,12,3,20,30,11,25],[2,4,6]);
-            });
-            document.addEventListener("DOMContentLoaded",function(event){
-                var dendogram = build_dendogram([[1,0,1,1,0],[1,1,0,1,0],[0,0,1,1,0],[0,1,0,1,0],[1,0,1,0,1],[0,1,1,0,0]], SMC_similarity, singleLinkMinDist,find_merge_point_min)
-                document.getElementById("prob3a_result").innerHTML = dendogram;
+                document.getElementById("prob13_1").innerHTML = prob13_1([2,4,10,12,3,20,30,11,25],[2,4,6]);
             });
             */
+            document.addEventListener("DOMContentLoaded",function(event){
+                var cluster1 = [[0,2],
+                                [0,0],
+                                [5,0]
+                                ];
+                var cluster2 = [[1.5,0],
+                                [5,2]
+                                ];
+                var kmeansEuclidean =  kMeansClustering([cluster1,cluster2],EuclideanDist);
+                var kmeansManhattan =  kMeansClustering([cluster1,cluster2],ManhattanDist);
+                document.getElementById("prob13_3").innerHTML = "Euclidean Distance</br>"+kmeansEuclidean+" </br>"+
+                                                                "Manhattan Distance</br>"+kmeansManhattan;
+            });
+            /*
+            document.addEventListener("DOMContentLoaded",function(event){
+                var dendogram = build_dendogram([[1,0,1,1,0],[1,1,0,1,0],[0,0,1,1,0],[0,1,0,1,0],[1,0,1,0,1],[0,1,1,0,0]], SMC_similarity, singleLinkMinDist,find_merge_point_min)
+                document.getElementById("prob14_1").innerHTML = dendogram;
+            });
             document.addEventListener("DOMContentLoaded",function(event){
                 //True maps to 1, false maps to 0. The third value will be normalized
                 var carDataClassL = [25,25];
@@ -27,7 +43,6 @@
                 output+="Class H Car Classification: "+print_car_data_calcs(carDataClassH,23)+"</br>";
                 document.getElementById("prob18_1").innerHTML = output;
             });
-            /*
             document.addEventListener("DOMContentLoaded",function(event){
                 //True maps to 1, false maps to 0. The third value will be normalized
                 var originalData = [[1,1,5],
@@ -92,8 +107,9 @@
         </script>
     </head>
     <body>
-        <p id="prob1_result"></p>
-        <p id="prob3a_result"></p>
+        <p id="prob13_1"></p>
+        <p id="prob13_3"></p>
+        <p id="prob14_1"></p>
         <p id="prob18_1"></p>
         <p id="prob18_2"></p>
         <p id="prob19_4"></p>

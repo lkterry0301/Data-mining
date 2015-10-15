@@ -36,31 +36,3 @@ function pointDistances(newPoint,data){
     }
     return distances;
 }
-
-function min_val(arr){
-    var min = Number.MAX_VALUE;
-    for(var i=arr.length-1;i>=0;i--){
-        if(arr[i] < min){
-            min = arr[i];
-        }
-    }
-    return min;
-}
-
-function max_val(arr){
-    var max = -Number.MAX_VALUE;
-    for(var i=arr.length-1;i>=0;i--){
-        if(arr[i] >max){
-            max = arr[i];
-        }
-    }
-    return max;
-}
-
-function EuclideanDist(p1,p2){
-    var sum = 0;
-    for(var feature=0;feature<p1.length;feature++){
-        sum += Math.pow(p2[feature]-p1[feature],2);
-    }
-    return Math.sqrt(sum);
-}

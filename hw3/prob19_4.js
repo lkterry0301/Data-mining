@@ -128,14 +128,6 @@ function performSplit(data,dataClasses,splitFunc,splitPoints,feature_vector){
     return splitVals;
 }
 
-function feature_vector(data,featurePos){
-    var vector = [];
-    for(var i=0;i<data.length;i++){
-        vector.push(data[i][featurePos]);
-    }
-    return vector;
-}
-
 function splitEntropy(class_labels1,class_labels2){
     var totalLen = class_labels1.length+class_labels2.length;
     return (class_labels1.length/totalLen) * entropy(class_labels1) + (class_labels2.length/totalLen) * entropy(class_labels2);
