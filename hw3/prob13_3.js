@@ -6,7 +6,7 @@ function kMeansClustering(clusters,distFunc){
     retVal += "Original clusters "+clusteringToString(clusters)+" have means "+ clusteringMeansToString(clusterMeans)+ "</br>";
     
     var newClusters = clusterAssignment(data,clusterMeans,distFunc);
-    var clusterMeans = centroidUpdate(newClusters);
+    clusterMeans = centroidUpdate(newClusters);
     var iteration = 1;
     retVal += "Iteration 1 has clusters "+clusteringToString(newClusters)+" with means "+ clusteringMeansToString(clusterMeans)+ "</br>";
     while( !dataClusteringsAreEqual(clusters,newClusters)){

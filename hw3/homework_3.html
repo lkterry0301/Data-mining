@@ -16,7 +16,6 @@
             document.addEventListener("DOMContentLoaded",function(event){
                 document.getElementById("prob13_1").innerHTML = prob13_1([2,4,10,12,3,20,30,11,25],[2,4,6]);
             });
-            */
             document.addEventListener("DOMContentLoaded",function(event){
                 var cluster1 = [[0,2],
                                 [0,0],
@@ -30,11 +29,19 @@
                 document.getElementById("prob13_3").innerHTML = "Euclidean Distance</br>"+kmeansEuclidean+" </br>"+
                                                                 "Manhattan Distance</br>"+kmeansManhattan;
             });
-            /*
+            */
             document.addEventListener("DOMContentLoaded",function(event){
-                var dendogram = build_dendogram([[1,0,1,1,0],[1,1,0,1,0],[0,0,1,1,0],[0,1,0,1,0],[1,0,1,0,1],[0,1,1,0,0]], SMC_similarity, singleLinkMinDist,find_merge_point_min)
-                document.getElementById("prob14_1").innerHTML = dendogram;
+                var dataPts = [[1,0,1,1,0],
+                                 [1,1,0,1,0],
+                                 [0,0,1,1,0],
+                                 [0,1,0,1,0],
+                                 [1,0,1,0,1],
+                                 [0,1,1,0,0]];
+                //var smcMinLink = agglomerativeClustering(dataPts, SMC_similarity, singleLinkMinDist, find_merge_point_min)
+                var dist_mat = dist_matrix(dataPts,SMC_similarity, singleLinkMinDist);
+                document.getElementById("prob14_1").innerHTML = prettify_dist_matrix(dist_mat);
             });
+            /*
             document.addEventListener("DOMContentLoaded",function(event){
                 //True maps to 1, false maps to 0. The third value will be normalized
                 var carDataClassL = [25,25];

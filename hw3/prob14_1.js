@@ -40,23 +40,33 @@ function singleLinkMinDist(c1,c2,similarityFunc){
     }
     return minDist;
 }
-
+/*
 function dist_matrix(clusters,similarityFunc,clusterDistFunc){
     var distMatrix = [];
     for(var i=0;i<clusters.length;i++){
         distMatrix.push([]);
-        for(var j=clusters.length-1;j>=i;j--){
+        for(var j=clusters[i].length-1;j>=0;j--){
             distMatrix[i].push(clusterDistFunc( clusters[i], clusters[j], similarityFunc));
         }
     }
     return distMatrix;
 }
-
+*/
+function dist_matrix(clusters,similarityFunc,clusterDistFunc){
+    var distMatrix = [];
+    for(var i=0;i<clusters.length;i++){
+        distMatrix.push([]);
+        for(var j=0;j<clusters.length;j++){
+            distMatrix[i].push(clusterDistFunc( clusters[i], clusters[j], similarityFunc));
+        }
+    }
+    return distMatrix;
+}
 function find_merge_point_min(dist_matrix){
     var min = Number.MAX_VALUE;
     var point;
     for(var i=0;i<dist_matrix.length;i++){
-        for(var j=dist_matrix[i].length-1;j>i;j--){
+        for(var j=i;j<dist_matrix[i].length;j++){
             if(dist_matrix[i][j] < min){
                 min = dist_matrix[i][j];
                 point =[i,j];
@@ -79,19 +89,19 @@ function prettify_dist_matrix(dist_matrix){
     return dist_matrixHTML;
 }
 
-function build_dendogram(points,similarityFunc,clusterDistFunc,mergeFunction){
-    var clusters = [points];
+function agglomerativeClustering(points,similarityFunc,clusterDistFunc,mergeFunction){
+    var clusters = points;
     var cluster_progression = "";
     while(clusters.length > 1){
         cluster_progression += clusters +"</br>";
         
-        var dist_matrix = dist_matrix(clusters,similarityFunc,clusterDistFunc);
-        var merge_point = mergeFunction(dist_matrix);
+        var distMatrix = dist_matrix(clusters,similarityFunc,clusterDistFunc);
+        var merge_point = mergeFunction(distMatrix);
         var new_cluster = [clusters[merge_point[0]],clusters[merge_point[1]]]
-        clusters.remove(merge_point[0]);
-        clusters.remove(merge_point[1]);
+        //clusters.remove(merge_point[0]);
+        //clusters.remove(merge_point[1]);
         
-        clusters.add(new_cluster);
+        //clusters.add(new_cluster);
     }
     return cluster_progression;
 }
