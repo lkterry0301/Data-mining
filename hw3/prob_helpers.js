@@ -15,25 +15,36 @@ function ManhattanDist(p1,p2){
     return sum;
 }
 
+function clustersToData(clustersList){
+    var data = []
+    clustersList.forEach(function(cluster){
+        data = data.concat(cluster);
+    });
+    return data;
+}
+
 function clusteringToString(clusters){
     var retVal = "";
     
-    clusters.forEach(function(data){
-        var dataPointsStr = data.map(function(dataPt){
-                return " ["+dataPt+"] ";
-            });
-        
-        retVal += " {"+dataPointsStr+"} ";
-    });
-    
-    return retVal;
-}
-
-function clusteringMeansToString(clusters){
-    var retVal = "";
-    
     clusters.forEach(function(entry){
-        retVal += "{"+entry+"} ";
+        retVal += " {"
+        
+        if(entry[0] instanceof Array){
+            retVal += entry.map(function(dataPt){
+                //OK, so this is confusing. There is a recursive call if the cluster is itself made up of further clusters (agglomerative clustering)
+                var dataOrFurtherClusters = "";
+                if(dataPt[0][0] instanceof Array){
+                    dataOrFurtherClusters += clusteringToString(dataPt);
+                }else{
+                    dataOrFurtherClusters= dataPt
+                }
+                    return " ["+dataOrFurtherClusters+"] ";
+                });
+        }else{
+            retVal += entry;
+        }
+        
+        retVal += "} ";
     });
     
     return retVal;

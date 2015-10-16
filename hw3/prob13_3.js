@@ -3,18 +3,18 @@ function kMeansClustering(clusters,distFunc){
     var data = clustersToData(clusters);
     var retVal = "";
     var clusterMeans = centroidUpdate(clusters);
-    retVal += "Original clusters "+clusteringToString(clusters)+" have means "+ clusteringMeansToString(clusterMeans)+ "</br>";
+    retVal += "Original clusters "+clusteringToString(clusters)+" have means "+ clusteringToString(clusterMeans)+ "</br>";
     
     var newClusters = clusterAssignment(data,clusterMeans,distFunc);
     clusterMeans = centroidUpdate(newClusters);
     var iteration = 1;
-    retVal += "Iteration 1 has clusters "+clusteringToString(newClusters)+" with means "+ clusteringMeansToString(clusterMeans)+ "</br>";
+    retVal += "Iteration 1 has clusters "+clusteringToString(newClusters)+" with means "+ clusteringToString(clusterMeans)+ "</br>";
     while( !dataClusteringsAreEqual(clusters,newClusters)){
         clusters = newClusters;
         clusterMeans = centroidUpdate(clusters);
         newClusters = clusterAssignment(data,clusterMeans,distFunc);
         iteration++;
-        retVal += "Iteration "+iteration+" has clusters "+clusteringToString(newClusters)+" with means "+clusteringMeansToString(clusterMeans) + "</br>";
+        retVal += "Iteration "+iteration+" has clusters "+clusteringToString(newClusters)+" with means "+clusteringToString(clusterMeans) + "</br>";
     }
     
     return retVal;

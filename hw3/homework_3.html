@@ -37,9 +37,10 @@
                                  [0,1,0,1,0],
                                  [1,0,1,0,1],
                                  [0,1,1,0,0]];
-                //var smcMinLink = agglomerativeClustering(dataPts, SMC_similarity, singleLinkMinDist, find_merge_point_min)
-                var dist_mat = dist_matrix(dataPts,SMC_similarity, singleLinkMinDist);
-                document.getElementById("prob14_1").innerHTML = prettify_dist_matrix(dist_mat);
+                //var rcMinLink = agglomerativeClustering(dataPts, RC_similarity, singleLinkMinDist, find_merge_point_min)
+                //var smcCompleteLink = agglomerativeClustering(dataPts, SMC_similarity, completeLinkMaxDist, find_merge_point_max)
+                var jcGroupLink = agglomerativeClustering(dataPts, JC_similarity, groupAvgDist, find_merge_point_min)
+                document.getElementById("prob14_1").innerHTML = jcGroupLink;// prettify_dist_matrix(dist_mat);
             });
             /*
             document.addEventListener("DOMContentLoaded",function(event){

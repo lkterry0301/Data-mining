@@ -1,74 +1,113 @@
 //c1,c2 are clusters
 function singleLinkMinDist(c1,c2,similarityFunc){
+    //transform points into a cluster by wrapping in an array, which makes the dist calculation simpler than a bunch of cases
+    if(! (c1[0] instanceof Array)){
+        c1 =[c1];
+    }
+    if(! (c2[0] instanceof Array)){
+        c2 = [c2];
+    }
+    
+    //find the min dist btw 2 clusters
     var minDist = Number.MAX_VALUE;
-    if(c1[0] instanceof Array){
-        for(var i=0; i<c1.length;i++){
-            var c1_point = c1[i];
-            if(c2[0] instanceof Array){
-                for(var j=0; j<c2.length;j++){
-                    var c2_point = c2[i];
-                    var dist = similarityFunc(c1_point,c2_point);
-                    if(dist< minDist){
-                        minDist = dist;
-                    }
-                }
-            }else{
-                var c2_point = c2;
-                var dist = similarityFunc(c1_point,c2_point);
-                if(dist< minDist){
-                    minDist = dist;
-                }
-            }
-        }
-    }else{
-        var c1_point = c1;
-        if(c2[0] instanceof Array){
-            for(var j=0; j<c2.length;j++){
-                var c2_point = c2[i];
-                var dist = similarityFunc(c1_point,c2_point);
-                if(dist< minDist){
-                    minDist = dist;
-                }
-            }
-        }else{
-            var c2_point = c2;
-            var dist = similarityFunc(c1_point,c2_point);
+    for(var i=0; i<c1.length;i++){
+        for(var j=0; j<c2.length;j++){
+            var dist = similarityFunc(c1[i],c2[j]);
             if(dist< minDist){
                 minDist = dist;
             }
         }
     }
+    
     return minDist;
 }
-/*
-function dist_matrix(clusters,similarityFunc,clusterDistFunc){
-    var distMatrix = [];
-    for(var i=0;i<clusters.length;i++){
-        distMatrix.push([]);
-        for(var j=clusters[i].length-1;j>=0;j--){
-            distMatrix[i].push(clusterDistFunc( clusters[i], clusters[j], similarityFunc));
+
+function completeLinkMaxDist(c1,c2,similarityFunc){
+    //transform points into a cluster by wrapping in an array, which makes the dist calculation simpler than a bunch of cases
+    if(! (c1[0] instanceof Array)){
+        c1 =[c1];
+    }
+    if(! (c2[0] instanceof Array)){
+        c2 = [c2];
+    }
+    
+    //find the min dist btw 2 clusters
+    var maxDist = Number.MAX_VALUE;
+    for(var i=0; i<c1.length;i++){
+        for(var j=0; j<c2.length;j++){
+            var dist = similarityFunc(c1[i],c2[j]);
+            if(dist> maxDist){
+                maxDist = dist;
+            }
         }
     }
-    return distMatrix;
+    
+    
+    return maxDist;
 }
-*/
+function groupAvgDist(c1,c2,similarityFunc){
+    //transform points into a cluster by wrapping in an array, which makes the dist calculation simpler than a bunch of cases
+    if(! (c1[0] instanceof Array)){
+        c1 =[c1];
+    }
+    if(! (c2[0] instanceof Array)){
+        c2 = [c2];
+    }
+    
+    //find the min dist btw 2 clusters
+    var totalSum =0;
+    for(var i=0; i<c1.length;i++){
+        var clusterISum =0;
+        for(var j=0; j<c2.length;j++){
+            clusterISum += similarityFunc(c1[i],c2[j]);
+        }
+        totalSum += clusterISum
+    }
+    
+    
+    return totalSum / (c1.length * c2.length);
+}
+
 function dist_matrix(clusters,similarityFunc,clusterDistFunc){
     var distMatrix = [];
+    
     for(var i=0;i<clusters.length;i++){
         distMatrix.push([]);
-        for(var j=0;j<clusters.length;j++){
-            distMatrix[i].push(clusterDistFunc( clusters[i], clusters[j], similarityFunc));
+        
+        for(var j=0;j<i;j++){
+            distMatrix[i].push(1/0);
+        }
+        
+        for(var j=i;j<clusters.length;j++){
+            distMatrix[i].push( clusterDistFunc( clusters[i], clusters[j], similarityFunc));
         }
     }
+    
     return distMatrix;
 }
 function find_merge_point_min(dist_matrix){
     var min = Number.MAX_VALUE;
     var point;
+    //search in the top right quadrant
     for(var i=0;i<dist_matrix.length;i++){
-        for(var j=i;j<dist_matrix[i].length;j++){
+        for(var j=i+1;j<dist_matrix[i].length;j++){//cannot merge with itself, so go from i+! to end
             if(dist_matrix[i][j] < min){
                 min = dist_matrix[i][j];
+                point =[i,j];
+            }
+        }
+    }
+    return point;
+}
+
+function find_merge_point_max(dist_matrix){
+    var max = -Number.MAX_VALUE;
+    var point;
+    //search in the top right quadrant
+    for(var i=0;i<dist_matrix.length;i++){
+        for(var j=i+1;j<dist_matrix[i].length;j++){//cannot merge with itself, so go from i+! to end
+            if(dist_matrix[i][j] > max){
+                max = dist_matrix[i][j];
                 point =[i,j];
             }
         }
@@ -90,18 +129,33 @@ function prettify_dist_matrix(dist_matrix){
 }
 
 function agglomerativeClustering(points,similarityFunc,clusterDistFunc,mergeFunction){
-    var clusters = points;
+    var clusters = points.map(function(point){return [point];});
     var cluster_progression = "";
     while(clusters.length > 1){
-        cluster_progression += clusters +"</br>";
+        cluster_progression += clusteringToString(clusters) +"</br>";
         
         var distMatrix = dist_matrix(clusters,similarityFunc,clusterDistFunc);
+        //cluster_progression += prettify_dist_matrix(distMatrix);
         var merge_point = mergeFunction(distMatrix);
-        var new_cluster = [clusters[merge_point[0]],clusters[merge_point[1]]]
-        //clusters.remove(merge_point[0]);
-        //clusters.remove(merge_point[1]);
+        var new_cluster = mergeClusters(clusters[merge_point[0]], clusters[merge_point[1]] );
         
-        //clusters.add(new_cluster);
+        var firstToSplice = Math.max(merge_point[0],merge_point[1]);
+        var secondToSplice = Math.min(merge_point[0],merge_point[1]);
+        clusters.splice(firstToSplice,1);
+        clusters.splice(secondToSplice,1);
+        
+        clusters.push(new_cluster);
     }
+    cluster_progression += clusteringToString([clusters]) +"</br>";
     return cluster_progression;
+}
+
+function mergeClusters(c1,c2){
+    if(! (c1[0] instanceof Array)){
+        c1 =[c1];
+    }
+    if(! (c2[0] instanceof Array)){
+        c2 = [c2];
+    }
+    return [c1,c2];
 }
