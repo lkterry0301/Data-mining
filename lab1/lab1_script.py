@@ -175,17 +175,14 @@ def median_tfidf(overall_tf_idf,num_words):
     #find num_words near the median tfidf values. 
     start_pos = len(sorted_tfidf_words)/2 - num_words/2
     kept_words = dict()
-    num_words_added = 0
     curr_iteration = 0
-    while (num_words_added < num_words):
+    while (len(kept_words) < num_words):
         word1 = sorted_tfidf_words[start_pos + curr_iteration][0]
         word2 = sorted_tfidf_words[start_pos - curr_iteration][0]
         if( kept_words.get(word1,-1) == -1):
             kept_words[word1] = ""
-            num_words_added += 1
-        if( num_words_added < num_words and kept_words.get(word2,-1) == -1):
+        if( len(kept_words) < num_words and kept_words.get(word2,-1) == -1):
             kept_words[word2] = ""
-            num_words_added += 1
         curr_iteration += 1
     
     #delete words that aren't kept
