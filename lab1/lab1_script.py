@@ -10,6 +10,7 @@ import nltk #natural language toolkit
 from nltk import stem
 from nltk.corpus import stopwords
 from bs4 import BeautifulSoup #xml/html parser, will be used for sgml data files
+from operator import itemgetter
 
 #global variables
 tfidf_big_file = os.getcwd()+"/../feature_vectors/words_reduced_down_by_tfidf.dat"
@@ -141,18 +142,61 @@ def get_tf_idf(data_matrix,doc_counts,cutoff_threshold):
         
         overall_tf_idf.append([data_matrix[i][0], tf_idf])#tfidf info is class_label, 15 best tfidf words
     
+    return median_tfidf(overall_tf_idf,cutoff_threshold)#top_tif(overall_tf_idf,lowest_tfidf_score_of_the_top_tfidf_scores,highest_tfidf_score,cutoff_threshold)
+
+def top_tfidf(overall_tf_idf,lowest_tfidf_score_of_the_top_tfidf_scores,highest_tfidf_score,cutoff_threshold):
     print("Filtering TF-IDF values")
     #reduce the number of words found via tfidf
     
     cutoff_tfidf =  lowest_tfidf_score_of_the_top_tfidf_scores + cutoff_threshold * (highest_tfidf_score - lowest_tfidf_score_of_the_top_tfidf_scores)
-    for list_item in overall_tf_idf:
-        document_tfidf_dict = list_item[1]
+    for doc in overall_tf_idf:
+        document_tfidf_dict = doc[1]
         for word in document_tfidf_dict.keys():
             if document_tfidf_dict[word] < cutoff_tfidf:
                del document_tfidf_dict[word]
     
     print("Finished TF-IDF feature vector")
     return overall_tf_idf
+
+def median_tfidf(overall_tf_idf,num_words):
+    all_tfidf_word_values = list()
+    
+    for doc in overall_tf_idf:
+        list_from_hash = doc[1].items()
+        all_tfidf_word_values = all_tfidf_word_values + list_from_hash
+        """
+        sorted_doc_words = sorted(doc_word_tfidf_dic.items(), key=operator.itemgetter(1))#list of tuples sorted by the second element 
+        median_tfidf_word = sorted_doc_words[ len(sorted_doc_words)/2 ]
+        median_tfidf_value = doc_word_tfidf_dic[median_tfidf_word]
+        """
+    #find which words should be kept (near the median tfidf value)
+    sorted_tfidf_words = sorted(all_tfidf_word_values, key=itemgetter(1))#list of (word,tfidf_value) sorted by the second element
+    
+    #find num_words near the median tfidf values. 
+    start_pos = len(sorted_tfidf_words)/2 - num_words/2
+    kept_words = dict()
+    num_words_added = 0
+    curr_iteration = 0
+    while (num_words_added < num_words):
+        word1 = sorted_tfidf_words[start_pos + curr_iteration][0]
+        word2 = sorted_tfidf_words[start_pos - curr_iteration][0]
+        if( kept_words.get(word1,-1) == -1):
+            kept_words[word1] = ""
+            num_words_added += 1
+        if( num_words_added < num_words and kept_words.get(word2,-1) == -1):
+            kept_words[word2] = ""
+            num_words_added += 1
+        curr_iteration += 1
+    
+    #delete words that aren't kept
+    for doc in overall_tf_idf:
+        document_tfidf_dict = doc[1]
+        for word in document_tfidf_dict.keys():
+            if kept_words.get(word,-1) == -1:
+               del document_tfidf_dict[word]
+
+    #print "Number of words in median tfidf data :: "+ str(len(kept_words))
+    return overall_tf_idf 
 
 def remove_words_from_data_matrix(words,data_matrix):
     data_matrix[0] = data_matrix[0] - words
@@ -191,8 +235,9 @@ def get_feature_vectors(directory_with_files):
         
         current_data_file.close()
     
-    tf_idf_big = get_tf_idf(data_matrix,num_documents_words_occur_in,0.117)
-    tf_idf_small = get_tf_idf(data_matrix,num_documents_words_occur_in,0.122)
+    #currently using median tfidf values
+    tf_idf_big = get_tf_idf(data_matrix,num_documents_words_occur_in,800) #cutoff for top_tfidf = 0.117
+    tf_idf_small = get_tf_idf(data_matrix,num_documents_words_occur_in,300) #cutoff for top_tfidf = 0.122
     document_frequency_filtering(data_matrix,num_documents_words_occur_in)
     
     print("Word extraction ran for %s seconds. " % (time.time() - start_time))
@@ -240,8 +285,8 @@ def print_num_words_in_feature_vectors(data_matrix,tfidf_big,tfidf_small):
     print "Num words in second (more filtered) TF-IDF data = "+str(len(words_in_tfidf_small))
 def main():
     feature_vectors = get_feature_vectors(os.getcwd()+"/../data_files") 
-    for vector in feature_vectors:
-        print vector
+    #for vector in feature_vectors:
+    #    print vector
 
 #calls the main() function
 if __name__ == "__main__":
