@@ -16,7 +16,7 @@ def get_KNN_classifier(tfidf_data, unique_words_in_tfidf_data, unique_class_labe
     print "Building KNN Classifier  ("+str(len(unique_words_in_tfidf_data))+" words)"
     start_time = time.time()
     
-    training_samples,class_labels = get_traning_samples_and_class_labels_vectors(tfidf_data, unique_words_in_tfidf_data, unique_class_labels)
+    training_samples,class_labels = get_training_samples_and_class_labels_vectors(tfidf_data, unique_words_in_tfidf_data, unique_class_labels)
     
     neigh = KNeighborsClassifier()
     neigh.fit(training_samples,class_labels)
@@ -28,14 +28,14 @@ def get_decision_tree(tfidf_data, unique_words_in_tfidf_data, unique_class_label
     print "Building decision tree ("+str(len(unique_words_in_tfidf_data))+" words)"
     start_time = time.time()
     
-    training_samples,class_labels = get_traning_samples_and_class_labels_vectors(tfidf_data, unique_words_in_tfidf_data, unique_class_labels)
+    training_samples,class_labels = get_training_samples_and_class_labels_vectors(tfidf_data, unique_words_in_tfidf_data, unique_class_labels)
     
     clf = tree.DecisionTreeClassifier()
     clf = clf.fit(training_samples, class_labels )
     
     return clf, (time.time() - start_time)
 
-def get_traning_samples_and_class_labels_vectors(tfidf_data, unique_words_in_tfidf_data, unique_class_labels):
+def get_training_samples_and_class_labels_vectors(tfidf_data, unique_words_in_tfidf_data, unique_class_labels):
     training_samples = list()
     class_labels = list()
     
