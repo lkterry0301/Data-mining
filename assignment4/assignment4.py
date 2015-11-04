@@ -29,6 +29,17 @@ def L2_normalization(vectorized_word_arr):
     
     return normalized_vector, squared_sum
 
+def cluster_radiuses(predictions,data,num_clusters):
+    cluster_radiuses_vals = [0]*num_clusters
+    
+    
+    
+    return cluster_radiuses_vals
+
+def   silhouette_oefficient(predictions,data,num_clusters):
+    
+    return
+
 def cluster_entropy(classes_in_cluster, data_with_class_label_indicies_counts):
     #convert classes list to hash representing the number of times a class_index appears in the cluster's class list
     classes = dict()
@@ -122,6 +133,7 @@ def vectorize_tfidf(tfidf_data):
     return lab2.get_training_samples_and_class_labels_vectors(tfidf_data, all_words, all_class_labels)
     
 def main():
+    print ""
     start_time = time.time()
     #get the feature vectors
     tfidf_larger,tfidf_smaller = lab2.get_feature_vectors()
@@ -141,6 +153,7 @@ def main():
     
     
     print "Total running time: "+str(time.time()  - start_time)+" seconds"
+    print ""
 
 #calls the main() function
 if __name__ == "__main__":
