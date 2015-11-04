@@ -39,12 +39,15 @@ def cluster_entropy(classes_in_cluster, data_with_class_label_indicies_counts):
         probability_class_in_cluster = (classes[class_index] +0.0) / data_with_class_label_indicies_counts[class_index]
         
         entropy += probability_class_in_cluster * math.log(probability_class_in_cluster,2)
-        
-        if(probability_class_in_cluster > 1):
+        print probability_class_in_cluster * math.log(probability_class_in_cluster,2)
+        """
+        if(probability_class_in_cluster >= 1):
+            print ""
             print classes[class_index] 
             print data_with_class_label_indicies_counts[class_index]
             print probability_class_in_cluster
             print ""
+        """
     
     return -1 * entropy
 
