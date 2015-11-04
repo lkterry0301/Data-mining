@@ -7,6 +7,21 @@ import os
 from sklearn.cluster import KMeans
 from sklearn.cluster import DBSCAN
 lab2 = imp.load_source('lab2', os.getcwd()+"/../lab2/lab2.py")
+"""
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.cluster import AgglomerativeClustering
+"""
+
+"""
+from sklearn.metrics.pairwise import cosine_similarity
+def new_euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
+    return cosine_similarity(X,Y)
+
+# monkey patch (ensure cosine dist function is used)
+from sklearn.cluster import k_means_k_means_.euclidean_distances 
+
+k_means_.euclidean_distances = new_euclidean_distances 
+"""
 
 def min_max_normalization(vectorized_word_arr):
     min_val = sys.maxint
@@ -35,13 +50,19 @@ def main():
     #get the feature vectors
     tfidf_larger,tfidf_smaller = lab2.get_feature_vectors()
     
+    #transform data to be usable with clustering algorithm
     vectorized_data_words, vectorized_data_labels = vectorize_tfidf(tfidf_smaller)
     min_max_normalization(vectorized_data_words)
-        
+    """
+    #C = 1 - cosine_similarity(vectorized_data_words)
+    #print C
+    ward = AgglomerativeClustering(n_clusters=10, linkage='ward').fit(vectorized_data_words)
+    """
+    
     #estimator = KMeans()
     #estimator = DBSCAN()
-    estimator = DBSCAN(metric="cosine",algorithm='brute')
-    estimator.fit_predict(vectorized_data_words)
+    #estimator = DBSCAN(metric="cosine",algorithm='brute')
+    #estimator.fit_predict(vectorized_data_words)
     
     
     print "Total running time: "+str(time.time()  - start_time)+" seconds"
