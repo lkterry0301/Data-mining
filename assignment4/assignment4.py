@@ -33,27 +33,18 @@ def cluster_entropy(classes_in_cluster, data_with_class_label_indicies_counts):
     for class_index in classes_in_cluster:
         classes[class_index] = classes.get(class_index,0) + 1
     
-    """
-    print len(classes_in_cluster)
-    print num_data_predicted_to_be_in_cluster
-    print ""
-    """
     
     entropy = 0
     for class_index in classes:
-        probability_class_in_cluster = classes[class_index] / data_with_class_label_indicies_counts[class_index]
-        """
-        print class_index
-        print classes[class_index]
-        print probability_class_in_cluster
-        print ""
-        """
+        probability_class_in_cluster = (classes[class_index] +0.0) / data_with_class_label_indicies_counts[class_index]
+        
         entropy += probability_class_in_cluster * math.log(probability_class_in_cluster,2)
-        """
-        print classes[class_index]
-        print data_with_class_label_indicies_counts[class_index]
-        print ""
-        """
+        
+        if(probability_class_in_cluster > 1):
+            print classes[class_index] 
+            print data_with_class_label_indicies_counts[class_index]
+            print probability_class_in_cluster
+            print ""
     
     return -1 * entropy
 
@@ -97,7 +88,8 @@ def stratified_sample_data(original_data, original_class_labels, num_sampling_pa
 def cluster_quality(predictions, data, labels):
     num_clusters = (max(predictions)+1)
     
-    classes_in_each_cluster = [[]] * num_clusters#this variable will track the class labels that are found in each cluster by appending respective class label indicies to needed cluster index
+    all_classes_counts = overall_class_label_counts(labels)
+    classes_in_each_cluster = init_list_of_lists(num_clusters)#this variable will track the class labels that are found in each cluster by appending respective class label indicies to needed cluster index
     num_predictions_in_each_cluster = [0] * num_clusters #can be multiple (or none) classes for each data point, so need extra variable to determine
     
     for i in range(0,len(predictions)):#Note: len(predictions) == len(data) == len(labels)
@@ -105,12 +97,19 @@ def cluster_quality(predictions, data, labels):
         classes_in_each_cluster[ predicted_data_cluster ].extend(labels[i]) #add data's class label to respective predicted cluster
         num_predictions_in_each_cluster[ predicted_data_cluster ] += 1
     
-    
     print "Number of clusters: "+str(num_clusters)
     print "Size of each cluster: "+str(num_predictions_in_each_cluster)
-    print "Cluster entropies: "+str( clustering_entropies(classes_in_each_cluster, class_label_indicies_counts(labels) ) )
+    print "Cluster entropies: "+str( clustering_entropies(classes_in_each_cluster, all_classes_counts ) )
+    #print "Overall counts of each class: "+str(all_classes_counts)
 
-def class_label_indicies_counts(all_labels):
+def init_list_of_lists(size):
+    #cannot use "return [[]] * size" as they are all references to the same list. Adding element to one adds element to all lists!
+    list_of_lists = list()
+    for i in range(0,size):
+        list_of_lists.append( list() )
+    return list_of_lists
+
+def overall_class_label_counts(all_labels):
     label_counts = dict()
     
     for data_points_class_labels in all_labels:
@@ -135,7 +134,7 @@ def main():
     vectorized_data_words, vectorized_class_labels = stratified_sample_data(vectorized_data_words, vectorized_class_labels, 
                                                                            num_sampling_partitions=20,
                                                                            total_desired_num_samples=5000,
-                                                                           l2_normalize_vectors=True)
+                                                                           l2_normalize_vectors=False)
     
     #estimator = KMeans()
     #estimator = DBSCAN()
