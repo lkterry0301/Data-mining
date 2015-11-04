@@ -50,24 +50,48 @@ def classes_in_clusters(num_clusters, predictions, all_labels):
     
     return classes_in_each_cluster, total_class_counts
 
-def cluster_radiuses(num_clusters,predictions,data):
-    cluster_radiuses_vals = [0]*num_clusters
+#centroid is avg feature values of every data point
+def cluster_centroid(cluster_data):
+    centroid = cluster_data[0]
+    #sum up the data values
+    for i in range(1,len(cluster_data)):
+        for j in range (0, cluster_data[i]):
+            centroid[j] += cluster_data[i][j]
     
-    max_dist = 0
+    #average the centroid
+    for feature_index in range(0,len(centroid)):
+        centroid[feature_index] = feature_index / len(cluster_data)
     
-    for i in range(0,len(data)):
-        pt1 = data[i]
-        for j in range(0,len(data)):    
-            pt2 = data[j]
+    return centroid
+
+def cluster_centroids(data_partitioned_into_clusters):
+    num_clusters = len(data_partitioned_into_clusters)
+    centroids = list()
+    
+    for cluster in data_partitioned_into_clusters:
+        centroids.append(cluster_centroid(cluster))
+    
+    return centroids
+
+def cluster_radius(cluster_data, centroid):
+    radius = 0
+    
+    for pt in cluster_data:
+        #find distance of pt from centroid
+        for i in range(0,len(pt)):
             euclidean_dist = 0
-            for index in range(0,len(pt1)): #len(pt1) == len(pt2)
-                euclidean_dist += pow(pt1[index] - pt2[index],2)
-            euclidean_dist = math.sqrt(euclidean_dist)
-            
-            euclidean_dist = euclidean_dist/2 #radius is half the distance
-            
-            if( euclidean_dist > max_dist ):
-                max_dist = euclidean_dist
+            for val_index in range(0,len(pt1)): #len(pt1) == len(pt2)
+                euclidean_dist += pow(pt[i] - centroid[i],2)
+            radius += math.sqrt(euclidean_dist)
+    
+    return radius / len(cluster_data)
+
+def avg_cluster_radiuses(data_partitioned_into_clusters,centroids):
+    num_clusters = len(data_partitioned_into_clusters)
+    cluster_radiuses_vals = list()
+    
+    for i in range(0,num_clusters):
+        cluster_radiuses_vals.append(cluster_radius(data_partitioned_into_clusters[i],centroids[i])
     
     return cluster_radiuses_vals
 
@@ -138,11 +162,13 @@ def cluster_quality(predictions, data, labels):
     #calculate quality info metrics
     entropies = clustering_entropies(classes_partitioned_into_clusters, total_class_counts)
     cluster_sizes = num_predicitions_in_each_cluster(data_partitioned_into_clusters)
+    #cluster_radiuses = max_cluster_radiuses(data_partitioned_into_clusters)
     
     #display metrics
     print "Number of clusters: "+str(num_clusters)
     print "Size of each cluster: "+str( cluster_sizes )
     print "Cluster entropies: "+str( entropies )
+    #print "Max radius in each cluster: "+str(cluster_radiuses)
 
 def init_list_of_lists(size):
     #cannot use "return [[]] * size" as they are all references to the same list. Adding element to one adds element to all lists!
@@ -181,9 +207,9 @@ def main():
     #estimator = DBSCAN()
     #estimator = DBSCAN(metric="cosine",algorithm='brute')
     prediction = estimator.fit_predict(vectorized_data_words)
+    
     cluster_quality(prediction, vectorized_data_words, vectorized_class_labels)
-    
-    
+        
     print "Total running time: "+str(time.time()  - start_time)+" seconds"
     print ""
 
