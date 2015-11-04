@@ -14,9 +14,11 @@ lab2 = imp.load_source('lab2', os.getcwd()+"/../lab2/lab2.py")
 #magnitude of each vector is 1
 def L2_normalization(vectorized_word_arr):
     normalized_vector = list()
+    
     squared_sum = 0
     for tfidf_score in vectorized_word_arr:
         squared_sum += tfidf_score * tfidf_score
+    squared_sum = math.sqrt(squared_sum)
     
     #if vector is not a zero vector (all positions are zero), normalize all the positions
     if(squared_sum != 0):
@@ -38,16 +40,8 @@ def cluster_entropy(classes_in_cluster, data_with_class_label_indicies_counts):
     for class_index in classes:
         probability_class_in_cluster = (classes[class_index] +0.0) / data_with_class_label_indicies_counts[class_index]
         
-        entropy += probability_class_in_cluster * math.log(probability_class_in_cluster,2)
-        print probability_class_in_cluster * math.log(probability_class_in_cluster,2)
-        """
-        if(probability_class_in_cluster >= 1):
-            print ""
-            print classes[class_index] 
-            print data_with_class_label_indicies_counts[class_index]
-            print probability_class_in_cluster
-            print ""
-        """
+        entropy_of_class_in_cluster = probability_class_in_cluster * math.log(probability_class_in_cluster,2)
+        entropy += entropy_of_class_in_cluster        
     
     return -1 * entropy
 
@@ -140,8 +134,8 @@ def main():
                                                                            l2_normalize_vectors=False)
     
     #estimator = KMeans()
-    #estimator = DBSCAN()
-    estimator = DBSCAN(metric="cosine",algorithm='brute')
+    estimator = DBSCAN()
+    #estimator = DBSCAN(metric="cosine",algorithm='brute')
     prediction = estimator.fit_predict(vectorized_data_words)
     cluster_quality(prediction, vectorized_data_words, vectorized_class_labels)
     
