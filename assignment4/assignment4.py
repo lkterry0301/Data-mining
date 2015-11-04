@@ -29,39 +29,74 @@ def L2_normalization(vectorized_word_arr):
     
     return normalized_vector, squared_sum
 
-def cluster_radiuses(predictions,data,num_clusters):
+def data_in_clusters(num_clusters,predictions,data):
+    cluster_data = init_list_of_lists(num_clusters)
+    
+    for i in range(0,len(data)):
+        cluster_data[ predictions[i] ].append( data[i] )
+    
+    return cluster_data
+
+def classes_in_clusters(num_clusters, predictions, all_labels):
+    #find the overall count of each class in the data, and the count of each class in each cluster
+    total_class_counts = dict()
+    classes_in_each_cluster = init_list_of_dicts(num_clusters)
+    for i in range(0,len(predictions)):#Note: len(predictions) == len(all_labels)
+        for individual_label_index_value in all_labels[i]:#can have multiple labels, so count each label for every doc
+            total_class_counts[individual_label_index_value] = total_class_counts.get(individual_label_index_value,0) + 1
+            
+            cluster_classes = classes_in_each_cluster[ predictions[i] ]
+            cluster_classes[individual_label_index_value] = cluster_classes.get(individual_label_index_value,0) + 1#add data's class label to respective predicted cluster
+    
+    return classes_in_each_cluster, total_class_counts
+
+def cluster_radiuses(num_clusters,predictions,data):
     cluster_radiuses_vals = [0]*num_clusters
     
+    max_dist = 0
     
+    for i in range(0,len(data)):
+        pt1 = data[i]
+        for j in range(0,len(data)):    
+            pt2 = data[j]
+            euclidean_dist = 0
+            for index in range(0,len(pt1)): #len(pt1) == len(pt2)
+                euclidean_dist += pow(pt1[index] - pt2[index],2)
+            euclidean_dist = math.sqrt(euclidean_dist)
+            
+            euclidean_dist = euclidean_dist/2 #radius is half the distance
+            
+            if( euclidean_dist > max_dist ):
+                max_dist = euclidean_dist
     
     return cluster_radiuses_vals
 
-def   silhouette_oefficient(predictions,data,num_clusters):
+def   silhouette_coefficient(predictions,data,num_clusters):
     
     return
 
-def cluster_entropy(classes_in_cluster, data_with_class_label_indicies_counts):
-    #convert classes list to hash representing the number of times a class_index appears in the cluster's class list
-    classes = dict()
-    for class_index in classes_in_cluster:
-        classes[class_index] = classes.get(class_index,0) + 1
-    
-    
+def num_predicitions_in_each_cluster(clustered_data):
+    cluster_counts = list()
+    for cluster in clustered_data:
+        cluster_counts.append( len(cluster) )
+    return cluster_counts
+
+def cluster_entropy(class_cluster_counts, overall_class_counts):    
     entropy = 0
-    for class_index in classes:
-        probability_class_in_cluster = (classes[class_index] +0.0) / data_with_class_label_indicies_counts[class_index]
+    for class_index in class_cluster_counts:
+        probability_class_in_cluster = (class_cluster_counts[class_index] +0.0) / overall_class_counts[class_index]
         
         entropy_of_class_in_cluster = probability_class_in_cluster * math.log(probability_class_in_cluster,2)
         entropy += entropy_of_class_in_cluster        
     
     return -1 * entropy
 
-def clustering_entropies(classes_in_each_cluster, data_with_class_label_indicies_counts):
+def clustering_entropies(classes_in_each_cluster, total_class_counts):
     num_clusters = len(classes_in_each_cluster)
-    
+    #calculate and return entropies of clusters
     cluster_entropy_values = list()
-    for i in range(0,num_clusters): #Note: len(classes_in_each_cluster) == len(num_predictions_in_each_cluster)
-        cluster_entropy_values.append( cluster_entropy(classes_in_each_cluster[i], data_with_class_label_indicies_counts) )
+    for i in range(0,num_clusters):
+        cluster_entropy_values.append( cluster_entropy(classes_in_each_cluster[i], total_class_counts) )
     
     return cluster_entropy_values
 
@@ -96,19 +131,18 @@ def stratified_sample_data(original_data, original_class_labels, num_sampling_pa
 def cluster_quality(predictions, data, labels):
     num_clusters = (max(predictions)+1)
     
-    all_classes_counts = overall_class_label_counts(labels)
-    classes_in_each_cluster = init_list_of_lists(num_clusters)#this variable will track the class labels that are found in each cluster by appending respective class label indicies to needed cluster index
-    num_predictions_in_each_cluster = [0] * num_clusters #can be multiple (or none) classes for each data point, so need extra variable to determine
+    #partition data + classes for ease of use
+    data_partitioned_into_clusters = data_in_clusters(num_clusters,predictions, data)
+    classes_partitioned_into_clusters, total_class_counts = classes_in_clusters(num_clusters,predictions, labels)
     
-    for i in range(0,len(predictions)):#Note: len(predictions) == len(data) == len(labels)
-        predicted_data_cluster = predictions[i]
-        classes_in_each_cluster[ predicted_data_cluster ].extend(labels[i]) #add data's class label to respective predicted cluster
-        num_predictions_in_each_cluster[ predicted_data_cluster ] += 1
+    #calculate quality info metrics
+    entropies = clustering_entropies(classes_partitioned_into_clusters, total_class_counts)
+    cluster_sizes = num_predicitions_in_each_cluster(data_partitioned_into_clusters)
     
+    #display metrics
     print "Number of clusters: "+str(num_clusters)
-    print "Size of each cluster: "+str(num_predictions_in_each_cluster)
-    print "Cluster entropies: "+str( clustering_entropies(classes_in_each_cluster, all_classes_counts ) )
-    #print "Overall counts of each class: "+str(all_classes_counts)
+    print "Size of each cluster: "+str( cluster_sizes )
+    print "Cluster entropies: "+str( entropies )
 
 def init_list_of_lists(size):
     #cannot use "return [[]] * size" as they are all references to the same list. Adding element to one adds element to all lists!
@@ -117,14 +151,12 @@ def init_list_of_lists(size):
         list_of_lists.append( list() )
     return list_of_lists
 
-def overall_class_label_counts(all_labels):
-    label_counts = dict()
-    
-    for data_points_class_labels in all_labels:
-        for individual_label_index_value in data_points_class_labels:
-            label_counts[individual_label_index_value] = label_counts.get(individual_label_index_value,0) + 1
-    
-    return label_counts
+def init_list_of_dicts(size):
+    #cannot use "return [[]] * size" as they are all references to the same list. Adding element to one adds element to all lists!
+    list_of_dicts = list()
+    for i in range(0,size):
+        list_of_dicts.append( dict() )
+    return list_of_dicts
 
 def vectorize_tfidf(tfidf_data):
     all_words = lab2.get_unique_words_in_tfidf_data(tfidf_data)
@@ -145,8 +177,8 @@ def main():
                                                                            total_desired_num_samples=5000,
                                                                            l2_normalize_vectors=False)
     
-    #estimator = KMeans()
-    estimator = DBSCAN()
+    estimator = KMeans()
+    #estimator = DBSCAN()
     #estimator = DBSCAN(metric="cosine",algorithm='brute')
     prediction = estimator.fit_predict(vectorized_data_words)
     cluster_quality(prediction, vectorized_data_words, vectorized_class_labels)
