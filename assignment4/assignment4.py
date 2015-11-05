@@ -60,15 +60,15 @@ def classes_in_clusters(num_clusters, predictions, all_labels):
 
 #centroid is avg feature values of every data point
 def cluster_centroid(cluster_data):
-    centroid = cluster_data[0]
+    centroid = [0]*len(cluster_data[0])
     #sum up the data values
-    for i in range(1,len(cluster_data)):
-        for j in range (0, len(cluster_data[i]) ):
-            centroid[j] += cluster_data[i][j]
+    for pt in cluster_data:
+        for j in range (0, len(centroid) ):
+            centroid[j] += pt[j]
     
     #average the centroid
-    for feature_index in range(0,len(centroid)):
-        centroid[feature_index] = feature_index / len(cluster_data)
+    for i in range(0,len(centroid)):
+        centroid[i] = centroid[i] / len(cluster_data)
     
     return centroid
 
@@ -162,6 +162,7 @@ def stratified_sample_data(original_data, original_class_labels, num_sampling_pa
 #data is raw (or normalized) values that were used in estimator
 #labels is the class labels corresponding to each data point
 def cluster_quality(predictions, data, labels):
+    print "Determining clustering quality..."+os.linesep
     num_clusters = (max(predictions)+1)
     
     #partition data + classes for ease of use
@@ -186,7 +187,7 @@ def cluster_info_str(size,entropy,centroid,avg_radius):
     info_str = ""
     info_str += "Cluster Size: "+str(size)+os.linesep
     info_str += "Cluster entropy: "+str(entropy)+os.linesep
-    info_str += "Cluster Centroid: "+str(centroid)+os.linesep
+    #info_str += "Cluster Centroid: "+str(centroid)+os.linesep
     info_str += "Cluster radius (average using centroid): "+str(avg_radius)+os.linesep
     return info_str
 
@@ -223,6 +224,7 @@ def main():
                                                                            total_desired_num_samples=5000,
                                                                            l2_normalize_vectors=False)
     
+    print "Clustering data..."
     estimator = KMeans()
     #estimator = DBSCAN()
     #estimator = DBSCAN(metric="cosine",algorithm='brute')
