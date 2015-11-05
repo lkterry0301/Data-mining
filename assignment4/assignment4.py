@@ -25,12 +25,12 @@ def L2_normalization(vectorized_word_arr):
     magnitude = 0
     for tfidf_score in vectorized_word_arr:
         magnitude += tfidf_score * tfidf_score
-    magnitude = math.sqrt(squared_sum)
+    magnitude = math.sqrt(magnitude)
     
     #if vector is not a zero vector (all positions are zero), normalize all the positions
     if(magnitude != 0):
         for i in range(0,len(vectorized_word_arr)):
-            vectorized_word_arr[i] /= squared_sum
+            vectorized_word_arr[i] /= magnitude
     #else:
         #How do zero vectors effect approximate spherical K-Means clustering if the vector is not on the unit circle?
     
@@ -167,12 +167,11 @@ def stratified_sample_data(original_data, original_class_labels, num_sampling_pa
             #append data (normalized if desired) and class label
             if l2_normalize_vectors:
                 L2_normalization(original_data[rand_data_pt])
-                new_data.append(normalized_vector)
-            else:
-                new_data.append(original_data[rand_data_pt])
+            new_data.append(original_data[rand_data_pt])
             new_class_labels.append(original_class_labels[rand_data_pt])
-
-            del original_data[rand_data_pt] #without replacement!
+            
+            #without replacement! Delete from original data as you sample
+            del original_data[rand_data_pt]
             end_original_data_index += -1
             num_sampled += 1
     
@@ -243,14 +242,14 @@ def main():
     vectorized_data_words, vectorized_class_labels = stratified_sample_data(vectorized_data_words, vectorized_class_labels, 
                                                                            num_sampling_partitions=20,
                                                                            total_desired_num_samples=5000,
-                                                                           l2_normalize_vectors=False)
+                                                                           l2_normalize_vectors=True)
     
     data_proc_time = time.time()  - start_time
     print "Data processing took "+str(data_proc_time)+" seconds"
     
     print "Clustering data..."
-    #estimator = KMeans()
-    estimator = DBSCAN()
+    estimator = KMeans()
+    #estimator = DBSCAN()
     #estimator = DBSCAN(metric="cosine",algorithm='brute')
     prediction = estimator.fit_predict(vectorized_data_words)
     
