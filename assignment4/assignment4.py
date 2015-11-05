@@ -6,11 +6,18 @@ import imp
 import os
 import random
 import math
-import statistics
 from sklearn.cluster import KMeans
 from sklearn.cluster import DBSCAN
 lab2 = imp.load_source('lab2', os.getcwd()+"/../lab2/lab2.py")
 
+def std_dev(items):
+    mean = sum(items) / len(items)
+    
+    squared_sum = 0
+    for item in items:
+        squared_sum += pow(item-mean,2)
+    
+    return math.sqrt( squared_sum/len(items) )
 
 #magnitude of each vector is 1
 def L2_normalization(vectorized_word_arr):
@@ -56,7 +63,7 @@ def cluster_centroid(cluster_data):
     centroid = cluster_data[0]
     #sum up the data values
     for i in range(1,len(cluster_data)):
-        for j in range (0, cluster_data[i]):
+        for j in range (0, len(cluster_data[i]) ):
             centroid[j] += cluster_data[i][j]
     
     #average the centroid
@@ -81,7 +88,7 @@ def cluster_radius(cluster_data, centroid):
         #find distance of pt from centroid
         for i in range(0,len(pt)):
             euclidean_dist = 0
-            for val_index in range(0,len(pt1)): #len(pt1) == len(pt2)
+            for val_index in range(0,len(pt)): #len(pt1) == len(pt2)
                 euclidean_dist += pow(pt[i] - centroid[i],2)
             radius += math.sqrt(euclidean_dist)
     
@@ -169,17 +176,19 @@ def cluster_quality(predictions, data, labels):
     
     #display metrics
     print "Number of clusters: "+str(num_clusters)
+    print "Standard Deviation in size of clusters: "+str(std_dev(cluster_sizes))
     for i in range(0,num_clusters):
-        print "Cluster "+i
+        print "Cluster "+str(i)
         print cluster_info_str(cluster_sizes[i],entropies[i], centroids[i],cluster_radiuses[i])
-    print "Size of each cluster: "+str( cluster_sizes )
-    print "Cluster entropies: "+str( entropies )
-    #print "Max radius in each cluster: "+str(cluster_radiuses)
-                                     
+    
 
 def cluster_info_str(size,entropy,centroid,avg_radius):
     info_str = ""
-    info_str += "Cluster Size: "
+    info_str += "Cluster Size: "+str(size)+os.linesep
+    info_str += "Cluster entropy: "+str(entropy)+os.linesep
+    info_str += "Cluster Centroid: "+str(centroid)+os.linesep
+    info_str += "Cluster radius (average using centroid): "+str(avg_radius)+os.linesep
+    return info_str
 
 def init_list_of_lists(size):
     #cannot use "return [[]] * size" as they are all references to the same list. Adding element to one adds element to all lists!
