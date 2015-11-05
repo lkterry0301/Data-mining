@@ -80,27 +80,40 @@ def cluster_centroids(data_partitioned_into_clusters):
     
     return centroids
 
-def cluster_radius(cluster_data, centroid):
+def squared_euclidean_dist(pt1,pt2):
+    euclidean_dist = 0
+    for i in range(0,len(pt1)): #len(pt1) == len(pt2)
+        euclidean_dist += pow(pt1[i] - pt2[i],2)
+    return euclidean_dist
+
+#SSE = sum squared error
+def cluster_radius_and_SSE(cluster_data, centroid):
     radius = 0
+    sse = 0
     
     for pt in cluster_data:
         #find distance of pt from centroid
         for i in range(0,len(pt)):
-            euclidean_dist = 0
-            for val_index in range(0,len(pt)): #len(pt1) == len(pt2)
-                euclidean_dist += pow(pt[i] - centroid[i],2)
-            radius += math.sqrt(euclidean_dist)/2
+            sqrd_euc_dist = squared_euclidean_dist(pt, centroid)
+            radius += math.sqrt(sqrd_euc_dist)/2
+            sse += sqrd_euc_dist
     
-    return radius / len(cluster_data)
+    radius /= len(cluster_data)
+    
+    return radius, sse
 
-def avg_cluster_radiuses(data_partitioned_into_clusters,centroids):
+def clustering_radiuses_and_SSEs(data_partitioned_into_clusters,centroids):
     num_clusters = len(data_partitioned_into_clusters)
+    cluster_SSEs = list()
     cluster_radiuses_vals = list()
     
     for i in range(0,num_clusters):
-        cluster_radiuses_vals.append(cluster_radius(data_partitioned_into_clusters[i],centroids[i]))
+        radius, sse = cluster_radius_and_SSE(data_partitioned_into_clusters[i],centroids[i])
+        
+        cluster_radiuses_vals.append(radius)
+        cluster_SSEs.append(sse)
     
-    return cluster_radiuses_vals
+    return cluster_radiuses_vals, cluster_SSEs
 """
 #not enough time to implement this
 def   silhouette_coefficient(predictions,data,num_clusters):
@@ -192,7 +205,7 @@ def cluster_quality(predictions, data, labels):
     entropies = clustering_entropies(classes_partitioned_into_clusters)    
     cluster_sizes = num_predicitions_in_each_cluster(data_partitioned_into_clusters)
     centroids = cluster_centroids(data_partitioned_into_clusters)
-    cluster_radiuses = avg_cluster_radiuses(data_partitioned_into_clusters, centroids)
+    cluster_radiuses,cluster_SSEs = clustering_radiuses_and_SSEs(data_partitioned_into_clusters, centroids)
     
     #display metrics
     print "Number of clusters: "+str(num_clusters)
@@ -200,15 +213,16 @@ def cluster_quality(predictions, data, labels):
     print "Information Gain: "+str(information_gain(entropies,data_partitioned_into_clusters,total_class_counts))
     for i in range(0,num_clusters):
         print "Cluster "+str(i)
-        print cluster_info_str(cluster_sizes[i],entropies[i], centroids[i],cluster_radiuses[i])
+        print cluster_info_str(cluster_sizes[i],entropies[i], centroids[i],cluster_radiuses[i],cluster_SSEs[i])
     
 
-def cluster_info_str(size,entropy,centroid,avg_radius):
+def cluster_info_str(size,entropy,centroid,avg_radius,sum_squared_error):
     info_str = ""
     info_str += "Cluster Size: "+str(size)+os.linesep
     info_str += "Cluster entropy: "+str(entropy)+os.linesep
     #info_str += "Cluster Centroid: "+str(centroid)+os.linesep
     info_str += "Cluster radius (average using centroid): "+str(avg_radius)+os.linesep
+    info_str += "Cluster Sum of Squared Error (using centroid): "+str(sum_squared_error)+os.linesep
     return info_str
 
 def init_list_of_lists(size):
