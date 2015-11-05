@@ -90,7 +90,7 @@ def cluster_radius(cluster_data, centroid):
             euclidean_dist = 0
             for val_index in range(0,len(pt)): #len(pt1) == len(pt2)
                 euclidean_dist += pow(pt[i] - centroid[i],2)
-            radius += math.sqrt(euclidean_dist)
+            radius += math.sqrt(euclidean_dist)/2
     
     return radius / len(cluster_data)
 
@@ -114,24 +114,44 @@ def num_predicitions_in_each_cluster(clustered_data):
         cluster_counts.append( len(cluster) )
     return cluster_counts
 
-def cluster_entropy(class_cluster_counts, overall_class_counts):    
+def cluster_entropy(class_cluster_counts):    
     entropy = 0
+    total_count = sum(class_cluster_counts.values())
+    
     for class_index in class_cluster_counts:
-        probability_class_in_cluster = (class_cluster_counts[class_index] +0.0) / overall_class_counts[class_index]
+        probability_class_in_cluster = (class_cluster_counts[class_index] +0.0) / total_count
         
         entropy_of_class_in_cluster = probability_class_in_cluster * math.log(probability_class_in_cluster,2)
         entropy += entropy_of_class_in_cluster        
     
     return -1 * entropy
 
-def clustering_entropies(classes_in_each_cluster, total_class_counts):
+def clustering_entropies(classes_in_each_cluster):
     num_clusters = len(classes_in_each_cluster)
     #calculate and return entropies of clusters
     cluster_entropy_values = list()
     for i in range(0,num_clusters):
-        cluster_entropy_values.append( cluster_entropy(classes_in_each_cluster[i], total_class_counts) )
+        cluster_entropy_values.append( cluster_entropy(classes_in_each_cluster[i]) )
     
     return cluster_entropy_values
+
+def information_gain(entropies, data_partitioned_into_clusters,overall_class_counts):
+    num_clusters = len(entropies)
+    
+    parent_entropy = cluster_entropy(overall_class_counts)
+    print parent_entropy
+    children_entropy = 0
+    
+    num_data_pts_total = 0
+    for cluster in data_partitioned_into_clusters:
+        num_data_pts_total += len(cluster)
+    
+    for i in range(0,num_clusters):
+        children_entropy += entropies[i] * ( len(data_partitioned_into_clusters[i])/float(num_data_pts_total) ) #weight each cluster entropy
+    
+    print children_entropy
+    
+    return parent_entropy - children_entropy
 
 def stratified_sample_data(original_data, original_class_labels, num_sampling_partitions, total_desired_num_samples, l2_normalize_vectors):
     new_data = list()
@@ -170,7 +190,7 @@ def cluster_quality(predictions, data, labels):
     classes_partitioned_into_clusters, total_class_counts = classes_in_clusters(num_clusters,predictions, labels)
     
     #calculate quality info metrics
-    entropies = clustering_entropies(classes_partitioned_into_clusters, total_class_counts)
+    entropies = clustering_entropies(classes_partitioned_into_clusters)    
     cluster_sizes = num_predicitions_in_each_cluster(data_partitioned_into_clusters)
     centroids = cluster_centroids(data_partitioned_into_clusters)
     cluster_radiuses = avg_cluster_radiuses(data_partitioned_into_clusters, centroids)
@@ -178,6 +198,7 @@ def cluster_quality(predictions, data, labels):
     #display metrics
     print "Number of clusters: "+str(num_clusters)
     print "Standard Deviation in size of clusters: "+str(std_dev(cluster_sizes))
+    print "Information Gain: "+str(information_gain(entropies,data_partitioned_into_clusters,total_class_counts))
     for i in range(0,num_clusters):
         print "Cluster "+str(i)
         print cluster_info_str(cluster_sizes[i],entropies[i], centroids[i],cluster_radiuses[i])
