@@ -6,6 +6,7 @@ import imp
 import os
 import random
 import math
+import statistics
 from sklearn.cluster import KMeans
 from sklearn.cluster import DBSCAN
 lab2 = imp.load_source('lab2', os.getcwd()+"/../lab2/lab2.py")
@@ -91,14 +92,15 @@ def avg_cluster_radiuses(data_partitioned_into_clusters,centroids):
     cluster_radiuses_vals = list()
     
     for i in range(0,num_clusters):
-        cluster_radiuses_vals.append(cluster_radius(data_partitioned_into_clusters[i],centroids[i])
+        cluster_radiuses_vals.append(cluster_radius(data_partitioned_into_clusters[i],centroids[i]))
     
     return cluster_radiuses_vals
-
+"""
+#not enough time to implement this
 def   silhouette_coefficient(predictions,data,num_clusters):
     
     return
-
+"""
 def num_predicitions_in_each_cluster(clustered_data):
     cluster_counts = list()
     for cluster in clustered_data:
@@ -162,13 +164,22 @@ def cluster_quality(predictions, data, labels):
     #calculate quality info metrics
     entropies = clustering_entropies(classes_partitioned_into_clusters, total_class_counts)
     cluster_sizes = num_predicitions_in_each_cluster(data_partitioned_into_clusters)
-    #cluster_radiuses = max_cluster_radiuses(data_partitioned_into_clusters)
+    centroids = cluster_centroids(data_partitioned_into_clusters)
+    cluster_radiuses = avg_cluster_radiuses(data_partitioned_into_clusters, centroids)
     
     #display metrics
     print "Number of clusters: "+str(num_clusters)
+    for i in range(0,num_clusters):
+        print "Cluster "+i
+        print cluster_info_str(cluster_sizes[i],entropies[i], centroids[i],cluster_radiuses[i])
     print "Size of each cluster: "+str( cluster_sizes )
     print "Cluster entropies: "+str( entropies )
     #print "Max radius in each cluster: "+str(cluster_radiuses)
+                                     
+
+def cluster_info_str(size,entropy,centroid,avg_radius):
+    info_str = ""
+    info_str += "Cluster Size: "
 
 def init_list_of_lists(size):
     #cannot use "return [[]] * size" as they are all references to the same list. Adding element to one adds element to all lists!
