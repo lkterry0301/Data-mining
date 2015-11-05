@@ -21,21 +21,20 @@ def std_dev(items):
 
 #magnitude of each vector is 1
 def L2_normalization(vectorized_word_arr):
-    normalized_vector = list()
     
-    squared_sum = 0
+    magnitude = 0
     for tfidf_score in vectorized_word_arr:
-        squared_sum += tfidf_score * tfidf_score
-    squared_sum = math.sqrt(squared_sum)
+        magnitude += tfidf_score * tfidf_score
+    magnitude = math.sqrt(squared_sum)
     
     #if vector is not a zero vector (all positions are zero), normalize all the positions
-    if(squared_sum != 0):
+    if(magnitude != 0):
         for i in range(0,len(vectorized_word_arr)):
-            normalized_vector.append( vectorized_word_arr[i] / squared_sum )
+            vectorized_word_arr[i] /= squared_sum
     #else:
-        #what do I do? Ignore the zero vector? How does this effect approximate spherical K-Means clustering if the vector is not on the unit circle?
+        #How do zero vectors effect approximate spherical K-Means clustering if the vector is not on the unit circle?
     
-    return normalized_vector, squared_sum
+    return magnitude
 
 def data_in_clusters(num_clusters,predictions,data):
     cluster_data = init_list_of_lists(num_clusters)
@@ -139,7 +138,6 @@ def information_gain(entropies, data_partitioned_into_clusters,overall_class_cou
     num_clusters = len(entropies)
     
     parent_entropy = cluster_entropy(overall_class_counts)
-    print parent_entropy
     children_entropy = 0
     
     num_data_pts_total = 0
@@ -148,33 +146,35 @@ def information_gain(entropies, data_partitioned_into_clusters,overall_class_cou
     
     for i in range(0,num_clusters):
         children_entropy += entropies[i] * ( len(data_partitioned_into_clusters[i])/float(num_data_pts_total) ) #weight each cluster entropy
-    
-    print children_entropy
-    
+        
     return parent_entropy - children_entropy
 
+#modifies the original data! Paritioned sampling without replacement
 def stratified_sample_data(original_data, original_class_labels, num_sampling_partitions, total_desired_num_samples, l2_normalize_vectors):
     new_data = list()
     new_class_labels = list()
     
     num_original_data_samples_per_partition = len(original_data) / num_sampling_partitions
     
-    for curr_partition in range(0,num_sampling_partitions):
-        
+    for curr_partition in range(num_sampling_partitions-1,-1,-1):
         start_original_data_index = num_original_data_samples_per_partition * curr_partition
         end_original_data_index = num_original_data_samples_per_partition * (curr_partition+1)
         
-        while len(new_data) < (total_desired_num_samples / num_sampling_partitions) * (curr_partition+1): #add a set number of samples per parition iteration
+        num_sampled = 0
+        while num_sampled < total_desired_num_samples/num_sampling_partitions: #add a set number of samples per parition iteration
             rand_data_pt = random.randrange(start_original_data_index, end_original_data_index)
-            normalized_vector, squared_sum = L2_normalization(original_data[rand_data_pt])
             
-            if squared_sum != 0:#do not append 0 vectors as they encode no useful info (and cannot be L2 normalized for approximate spherical K-means using SKLearn's Euclidean K-means)
-                #append data (normalized if desired) and class label
-                if l2_normalize_vectors:
-                    new_data.append(normalized_vector)
-                else:
-                    new_data.append(original_data[rand_data_pt])
-                new_class_labels.append(original_class_labels[rand_data_pt])
+            #append data (normalized if desired) and class label
+            if l2_normalize_vectors:
+                L2_normalization(original_data[rand_data_pt])
+                new_data.append(normalized_vector)
+            else:
+                new_data.append(original_data[rand_data_pt])
+            new_class_labels.append(original_class_labels[rand_data_pt])
+
+            del original_data[rand_data_pt] #without replacement!
+            end_original_data_index += -1
+            num_sampled += 1
     
     return new_data,new_class_labels
 
@@ -245,12 +245,16 @@ def main():
                                                                            total_desired_num_samples=5000,
                                                                            l2_normalize_vectors=False)
     
+    data_proc_time = time.time()  - start_time
+    print "Data processing took "+str(data_proc_time)+" seconds"
+    
     print "Clustering data..."
-    estimator = KMeans()
-    #estimator = DBSCAN()
+    #estimator = KMeans()
+    estimator = DBSCAN()
     #estimator = DBSCAN(metric="cosine",algorithm='brute')
     prediction = estimator.fit_predict(vectorized_data_words)
     
+    print "Clustering took "+str(time.time()  - start_time - data_proc_time)+" seconds"
     cluster_quality(prediction, vectorized_data_words, vectorized_class_labels)
         
     print "Total running time: "+str(time.time()  - start_time)+" seconds"
