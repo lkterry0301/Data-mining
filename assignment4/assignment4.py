@@ -6,9 +6,11 @@ import imp
 import os
 import random
 import math
+import json
 from sklearn.cluster import KMeans
 from sklearn.cluster import DBSCAN
 lab2 = imp.load_source('lab2', os.getcwd()+"/../lab2/lab2.py")
+sampled_data_path = os.getcwd()+"/../feature_vectors/representative_sampled_data_trial.dat"
 
 def std_dev(items):
     mean = sum(items) / len(items)
@@ -163,7 +165,7 @@ def information_gain(entropies, data_partitioned_into_clusters,overall_class_cou
     return parent_entropy - children_entropy
 
 #modifies the original data! Paritioned sampling without replacement
-def stratified_sample_data(original_data, original_class_labels, num_sampling_partitions, total_desired_num_samples, l2_normalize_vectors):
+def stratified_sample_data(original_data, original_class_labels, num_sampling_partitions, total_desired_num_samples):
     new_data = list()
     new_class_labels = list()
     
@@ -177,9 +179,6 @@ def stratified_sample_data(original_data, original_class_labels, num_sampling_pa
         while num_sampled < total_desired_num_samples/num_sampling_partitions: #add a set number of samples per parition iteration
             rand_data_pt = random.randrange(start_original_data_index, end_original_data_index)
             
-            #append data (normalized if desired) and class label
-            if l2_normalize_vectors:
-                L2_normalization(original_data[rand_data_pt])
             new_data.append(original_data[rand_data_pt])
             new_class_labels.append(original_class_labels[rand_data_pt])
             
@@ -244,25 +243,57 @@ def vectorize_tfidf(tfidf_data):
     all_class_labels = lab2.get_unique_class_labels_in_tfidf_data(tfidf_data)
     
     return lab2.get_training_samples_and_class_labels_vectors(tfidf_data, all_words, all_class_labels)
+
+def num_unique_classes(doc_class_labels):
+    labels = set()
+    for doc in doc_class_labels:
+        for label in doc:
+            labels.add(label)
+    return len(labels)
+
+
+def get_sample_data(l2_normalize,redraw_sampled_data = False):
+    print "Getting representative sampled data..."
+    vectorized_data_words = None
+    vectorized_class_labels = None
     
+    if(redraw_sampled_data or not os.path.exists(sampled_data_path) ):
+        if os.path.exists(sampled_data_path):
+            os.remove(sampled_data_path)
+        
+        #get the feature vectors
+        tfidf_larger,tfidf_smaller = lab2.get_feature_vectors()
+        #transform data to be usable with clustering algorithm
+        vectorized_data_words, vectorized_class_labels = vectorize_tfidf(tfidf_smaller)
+        vectorized_data_words, vectorized_class_labels = stratified_sample_data(vectorized_data_words, vectorized_class_labels, 
+                                                                               num_sampling_partitions=20,
+                                                                               total_desired_num_samples=5000)
+        
+        output_sample_data_file = open(sampled_data_path,'w')
+        json.dump( [vectorized_data_words, vectorized_class_labels] ,output_sample_data_file)
+    else:
+        sample_data_file = open(sampled_data_path, "r")
+        tmp = json.loads( sample_data_file.read() )
+        vectorized_data_words = tmp[0]
+        vectorized_class_labels = tmp[1]
+    
+    if(l2_normalize):
+        for pt in vectorized_data_words:
+            L2_normalization(pt)
+    
+    return vectorized_data_words, vectorized_class_labels
+
 def main():
     print ""
     start_time = time.time()
-    #get the feature vectors
-    tfidf_larger,tfidf_smaller = lab2.get_feature_vectors()
     
-    #transform data to be usable with clustering algorithm
-    vectorized_data_words, vectorized_class_labels = vectorize_tfidf(tfidf_smaller)
-    vectorized_data_words, vectorized_class_labels = stratified_sample_data(vectorized_data_words, vectorized_class_labels, 
-                                                                           num_sampling_partitions=20,
-                                                                           total_desired_num_samples=5000,
-                                                                           l2_normalize_vectors=True)
+    vectorized_data_words, vectorized_class_labels = get_sample_data(l2_normalize = True)
     
     data_proc_time = time.time()  - start_time
     print "Data processing took "+str(data_proc_time)+" seconds"
     
     print "Clustering data..."
-    estimator = KMeans()
+    estimator = KMeans(n_clusters = num_unique_classes(vectorized_class_labels) )
     #estimator = DBSCAN()
     #estimator = DBSCAN(metric="cosine",algorithm='brute')
     prediction = estimator.fit_predict(vectorized_data_words)
