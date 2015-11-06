@@ -27,6 +27,19 @@ The output to the console is
 1. Data extraction method. If feature vectors from a previous lab1 trial are missing, lab1 will automatically be run again (adds about 5 minutes). Otherwise the data will be parsed almost immediately from the files.
 2. A series of 4 cross validation trials. KNN and Decision Tree classifiers are created from a set of words found in Lab1. These words are associated with TF-IDF values and document class labels. The first 2 Cross Validation trials create a KNN and a Decision Tree classifier for a smaller subset of data. The second 2 use a larger set of data and take longer to run.
 
+####Lab 4 Description
+
+To run this program navigate to the assignment4 directory and run 
+```
+python assignment4.py #This takes about 2.5 minutes to complete. A few seconds for clustering and 2 minutes for quality calculations
+```
+To run different clustering algorithms, change the code inside the main() function to comment/uncomment different estimator setup lines.
+
+The output to the console is 
+
+1. Time it takes for data processing and clustering to take place
+2. Clustering quality: Number of clusters created, Information Gain of clusters, average cluster radius (from centroid), average cluster Sum of Squared Error, and standard deviation of all cluster sizes (number of data points).
+3. Total run time
 
 ####Resources
 
