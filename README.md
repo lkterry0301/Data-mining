@@ -46,3 +46,5 @@ The output to the console is
 * [Class Website](http://web.cse.ohio-state.edu/~srini/674/)
 * [Lab 1](http://web.cse.ohio-state.edu/~srini/674/assignment1.doc)
 * [Lab 2](http://web.cse.ohio-state.edu/~srini/674/assign2.doc)
+* [HW 3](http://web.cse.ohio-state.edu/%7Esrini/674/NewAssign3.docx)
+* [Lab 4](http://web.cse.ohio-state.edu/%7Esrini/674/newassign4.doc)
