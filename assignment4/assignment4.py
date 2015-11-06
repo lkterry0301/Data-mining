@@ -195,6 +195,7 @@ def stratified_sample_data(original_data, original_class_labels, num_sampling_pa
 def cluster_quality(predictions, data, labels):
     print "Determining clustering quality..."+os.linesep
     num_clusters = (max(predictions)+1)
+    print "Number of clusters: "+str(num_clusters)
     
     #partition data + classes for ease of use
     data_partitioned_into_clusters = data_in_clusters(num_clusters,predictions, data)
@@ -207,12 +208,15 @@ def cluster_quality(predictions, data, labels):
     cluster_radiuses,cluster_SSEs = clustering_radiuses_and_SSEs(data_partitioned_into_clusters, centroids)
     
     #display metrics
-    print "Number of clusters: "+str(num_clusters)
-    print "Standard Deviation in size of clusters: "+str(std_dev(cluster_sizes))
     print "Information Gain: "+str(information_gain(entropies,data_partitioned_into_clusters,total_class_counts))
+    print "Average Cluster Radius: "+ str( sum(cluster_radiuses)/len(cluster_radiuses) )
+    print "Average Cluster SSE: "+ str( sum(cluster_SSEs)/len(cluster_SSEs) )
+    print "Standard Deviation in size of clusters: "+str(std_dev(cluster_sizes))
+    """
     for i in range(0,num_clusters):
         print "Cluster "+str(i)
         print cluster_info_str(cluster_sizes[i],entropies[i], centroids[i],cluster_radiuses[i],cluster_SSEs[i])
+    """
     
 
 def cluster_info_str(size,entropy,centroid,avg_radius,sum_squared_error):
@@ -287,15 +291,15 @@ def main():
     print ""
     start_time = time.time()
     
-    vectorized_data_words, vectorized_class_labels = get_sample_data(l2_normalize = True)
+    vectorized_data_words, vectorized_class_labels = get_sample_data(False)
     
     data_proc_time = time.time()  - start_time
     print "Data processing took "+str(data_proc_time)+" seconds"
     
     print "Clustering data..."
-    estimator = KMeans(n_clusters = num_unique_classes(vectorized_class_labels) )
-    #estimator = DBSCAN()
-    #estimator = DBSCAN(metric="cosine",algorithm='brute')
+    #estimator = KMeans(n_clusters = int(num_unique_classes(vectorized_class_labels)) )
+    #estimator = DBSCAN(min_samples=1)
+    estimator = DBSCAN(eps=0.53,min_samples=2,metric="cosine",algorithm='brute')
     prediction = estimator.fit_predict(vectorized_data_words)
     
     print "Clustering took "+str(time.time()  - start_time - data_proc_time)+" seconds"
