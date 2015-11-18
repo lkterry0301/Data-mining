@@ -6,7 +6,7 @@ import os
 import random
 import math
 import json
-lab2 = imp.load_source('lab2', os.getcwd()+"/../lab2/lab2.py")
+lab4 = imp.load_source('lab4', os.getcwd()+"/../assignment4/assignment4.py")
 
 true_similarity_file = os.getcwd()+"/../feature_vectors/true_jaccard_similarity.dat"
 
@@ -69,7 +69,7 @@ def baseline_similarity(vectorized_data_words, force_recalculate=False):
     #compare each file to every other file
     for i in range(0,len(vectorized_data_words)):
         next_row = list()
-        
+        """This is wrong...
         #speed it up a bit by realizing many comparisons will already have been made at later iterations
         if i>0:
             for j in range(0,i):
@@ -79,8 +79,8 @@ def baseline_similarity(vectorized_data_words, force_recalculate=False):
                 update_progress( progress_in_percent ) 
         
         next_row.append(1) #Jaccard imilarity to itself is 1
-        
-        for j in range (i+1,len(vectorized_data_words)):
+        """
+        for j in range (0,len(vectorized_data_words)):
             v1 = vectorized_data_words[i]
             v2 = vectorized_data_words[j]
             next_row.append(jaccard_similarity_of_bit_vectors(v1,v2)) 
@@ -92,7 +92,7 @@ def baseline_similarity(vectorized_data_words, force_recalculate=False):
     
     
     sim_file = open(true_similarity_file,'w')
-    json.dumps(true_similarity, sim_file)
+    json.dump(true_similarity, sim_file)
     
     return true_similarity
 
@@ -102,31 +102,24 @@ def bit_vector_from_word_vector(word_v):
 
 #no longer TF-IDF values, just whether or not the word is in the hash
 def vectorized_feature_vectors_indicating_word_presence():
-    tfidf_larger,tfidf_smaller = lab2.get_feature_vectors()
+    word_vectors,class_labels = lab4.get_sample_data(False,False)
     
-    #convert tfidf values to booleans
-    for doc in tfidf_smaller:
-        for key in doc[1].keys():
-            if doc[1][key] > 0:
-                doc[1][key] = 1
+    for i in range(0,len(word_vectors)):        
+        #convert tfidf values to booleans
+        for j in range(0,len(word_vectors[i])):
+            if word_vectors[i][j] > 0:
+                word_vectors[i][j] = 1
+        
+        #convert booleans to bit vector
+        word_vectors[i] = bit_vector_from_word_vector(word_vectors[i])
     
-    #vectorize    
-    all_words = lab2.get_unique_words_in_tfidf_data(tfidf_smaller)
-    all_class_labels = lab2.get_unique_class_labels_in_tfidf_data(tfidf_smaller)
-    
-    vectorized_data_words, vectorized_class_labels = lab2.get_training_samples_and_class_labels_vectors(tfidf_smaller, all_words, all_class_labels)
-    
-    #convert boolean lists to bit vectors
-    for i in range(0, len(vectorized_data_words)):
-        vectorized_data_words[i] = bit_vector_from_word_vector(vectorized_data_words[i])
-    
-    return vectorized_data_words, all_words
+    return word_vectors
 
 def main():
     print ""
     start_time = time.time()
     
-    vectorized_data_words, word_ordering  = vectorized_feature_vectors_indicating_word_presence()
+    vectorized_data_words  = vectorized_feature_vectors_indicating_word_presence()
     
     baseline_similarity(vectorized_data_words)
     

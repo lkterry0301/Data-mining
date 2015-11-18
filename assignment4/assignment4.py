@@ -285,6 +285,8 @@ def get_sample_data(l2_normalize,redraw_sampled_data = False):
         for pt in vectorized_data_words:
             L2_normalization(pt)
     
+    print "Representative sampling yields a dataset with "+str(len(vectorized_data_words) )+" entries."
+    
     return vectorized_data_words, vectorized_class_labels
 
 def main():
