@@ -8,6 +8,8 @@ import math
 import json
 lab4 = imp.load_source('lab4', os.getcwd()+"/../assignment4/assignment4.py")
 
+primes_under_1k = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503, 509, 521, 523, 541, 547, 557, 563, 569, 571, 577, 587, 593, 599, 601, 607, 613, 617, 619, 631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691, 701, 709, 719, 727, 733, 739, 743, 751, 757, 761, 769, 773, 787, 797, 809, 811, 821, 823, 827, 829, 839, 853, 857, 859, 863, 877, 881, 883, 887, 907, 911, 919, 929, 937, 941, 947, 953, 967, 971, 977, 983, 991, 997]
+
 true_similarity_file = os.getcwd()+"/../feature_vectors/true_jaccard_similarity.dat"
 
 # Copied from http://stackoverflow.com/a/15862048
@@ -30,8 +32,18 @@ def update_progress(progress):
     sys.stdout.write(text)
     sys.stdout.flush()
 
-def hash_document(doc,a,b,):
-    return
+def doc_signature(doc,hash_functions_coefficients):
+    p = next_biggest_prime(doc)
+    hash_val = ( a * doc + b ) % p
+    
+
+def create_hash_functions(num_functions):
+    hash_functions_coefficients = list()
+    
+    for i in range(0,num_functions):
+        hash_functions_coefficients.append([random.randrange(1,),random.randrange()])
+    
+    return hash_functions_coefficients
 
 def jaccard_similarity_of_bit_vectors(bv1,bv2):
     if(bv1 or bv2 == 0):
@@ -95,6 +107,70 @@ def baseline_similarity(vectorized_data_words, force_recalculate=False):
     json.dump(true_similarity, sim_file)
     
     return true_similarity
+
+
+def check_primality(x):
+    could_be_prime = fast_might_be_prime_check(x)
+    if could_be_prime =="maybe" :
+        return miller_rabin(x)
+    elif could_be_prime == "isPrime":
+        return True
+    
+    return False
+
+#Miller-Rabin primality test. iteration signifies the accuracy of the test
+#at this point, the passed in number is guaranteed to be an odd number not divisible by all the primes under 1k.
+#source: https://gist.github.com/bnlucas/5857478
+def miller_rabin(n, k=20):
+	if n == 2:
+		return True
+	if not n & 1:
+		return False
+
+	def check(a, s, d, n):
+		x = pow(a, d, n)
+		if x == 1:
+			return True
+		for i in xrange(s - 1):
+			if x == n - 1:
+				return True
+			x = pow(x, 2, n)
+		return x == n - 1
+
+	s = 0
+	d = n - 1
+
+	while d % 2 == 0:
+		d >>= 1
+		s += 1
+
+	for i in xrange(k):
+		a = random.randrange(2, n - 1)
+		if not check(a, s, d, n):
+			return False
+	return True
+
+#Check if a number MIGHT be prime by seeing if it is divisble by the small primes first
+def fast_might_be_prime_check(x):
+    for prime in primes_under_1k:
+        if x != prime and x % prime == 0:
+            return "no"
+        elif x == prime:
+            return "isPrime"
+    
+    return "maybe"
+
+#Bertrand's theorem: for every n > 1 there is always at least one prime p such that n < p < 2n.
+def next_biggest_prime(x):    
+    if x%2 ==0:
+        x+=1
+        if check_primality(x):
+            return x
+    
+    while(True):
+        x += 2
+        if check_primality(x):
+            return x
 
 def bit_vector_from_word_vector(word_v):
     word_v_as_str = "".join(map(str, word_v))
