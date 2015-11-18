@@ -58,8 +58,7 @@ def get_training_samples_and_class_labels_vectors(tfidf_data, unique_words_in_tf
 def get_unique_words_in_tfidf_data(tfidf_data):
     words = set()
     for doc in tfidf_data:
-        for key in doc[1]:
-            words.add(key)
+        words = words.union(doc[1].keys())
     return list(words)
 
 def vectorize_document_words(word_dict,all_unique_words_across_docs):

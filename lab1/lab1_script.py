@@ -47,6 +47,7 @@ def should_filter_out_word(word,list_of_article_topics):
 def increment_hash(dictionary,key):
     dictionary[key] = dictionary.get(key,0) + 1
 
+#sorts a dictionary based upon keys' values. Smallest valued items are sorted to front. list is returned where each element is [key,value]
 def sorted_dict_as_list(d):
     return sorted(d.iteritems(),key=lambda(k,v):(v,k))
     
@@ -122,27 +123,34 @@ def get_tf_idf(data_matrix,doc_counts,cutoff_threshold):
     lowest_tfidf_score_of_the_top_tfidf_scores = 0.0
     
     #find the top tfidf words in the entire document and keep them segregated by their class labels
-    num_docs = len(data_matrix)-1 #one row of data matrix is a set of unique words, not a document
+    num_docs = len(data_matrix)-1 #first row of data matrix is a set of unique words, not a document
     for i in range(1,len(data_matrix)):
-        tf_idf = dict([])
+        doc_tf_idf = dict([])
+        
         #calculate tfidf for every word in this document
         for word in data_matrix[i][1]:
-            tf_idf[word] = data_matrix[i][1][word] * math.log( num_docs/doc_counts[word] )
+            doc_tf_idf[word] = data_matrix[i][1][word] * math.log( num_docs/doc_counts[word] )
         
-        #add the best tfidf words from this document into the overall tfidf at the class label position
-        tf_idf_sorted = sorted_dict_as_list(tf_idf)
-        tf_idf = dict([])
-        for j in range(0, min(15,len(tf_idf_sorted)) ):
+        """
+        #prepare for using the top-tfidf values by finding the range of top tf-idf values to keep
+        #add the best tfidf words from this document into the overall tfidf values at the current document's index position
+        tf_idf_sorted = sorted_dict_as_list(doc_tf_idf)
+        doc_tf_idf = dict([])
+        for j in range(len(tf_idf_sorted)-1, max(-1,len(tf_idf_sorted)-15),-1 ):#highest tfidf values at end of list
+            if(tf_idf_sorted[j][1] == 0): #if the value is 0, we have reached words that occur in all docs. These are worthless, so stop looking
+                break
             if(tf_idf_sorted[j][1] > highest_tfidf_score):
                 highest_tfidf_score = tf_idf_sorted[j][1]
             if(tf_idf_sorted[j][1] < lowest_tfidf_score_of_the_top_tfidf_scores):
                 lowest_tfidf_score_of_the_top_tfidf_scores = lowest_tfidf_score_of_the_top_tfidf_scores[j][1]
             
-            tf_idf[ tf_idf_sorted[j][0] ] = tf_idf_sorted[j][1]
+            key = tf_idf_sorted[j][0]
+            doc_tf_idf[ key ] = tf_idf_sorted[j][1]
+        """
+        overall_tf_idf.append([data_matrix[i][0], doc_tf_idf])
         
-        overall_tf_idf.append([data_matrix[i][0], tf_idf])#tfidf info is class_label, 15 best tfidf words
-    
-    return median_tfidf(overall_tf_idf,cutoff_threshold)#top_tif(overall_tf_idf,lowest_tfidf_score_of_the_top_tfidf_scores,highest_tfidf_score,cutoff_threshold)
+    return median_tfidf(overall_tf_idf,cutoff_threshold)
+    #return top_tfidf(overall_tf_idf,lowest_tfidf_score_of_the_top_tfidf_scores,highest_tfidf_score,cutoff_threshold)
 
 def top_tfidf(overall_tf_idf,lowest_tfidf_score_of_the_top_tfidf_scores,highest_tfidf_score,cutoff_threshold):
     print("Filtering TF-IDF values")
@@ -175,14 +183,25 @@ def median_tfidf(overall_tf_idf,num_words):
     #find num_words near the median tfidf values. 
     start_pos = len(sorted_tfidf_words)/2 - num_words/2
     kept_words = dict()
+    
     curr_iteration = 0
-    while (len(kept_words) < num_words):
-        word1 = sorted_tfidf_words[start_pos + curr_iteration][0]
-        word2 = sorted_tfidf_words[start_pos - curr_iteration][0]
-        if( kept_words.get(word1,-1) == -1):
-            kept_words[word1] = ""
-        if( len(kept_words) < num_words and kept_words.get(word2,-1) == -1):
-            kept_words[word2] = ""
+    #start at median, descend to lower valued TF-IDF words and add them to the word list. Stop once tou reach word #limit, or stop words
+    while (len(kept_words) < num_words and sorted_tfidf_words[start_pos - curr_iteration][1]>0):#while under limit and not reach noise words (0.0 TF-IDF value)
+        word = sorted_tfidf_words[start_pos - curr_iteration][0]
+        
+        if( kept_words.get(word,-1) == -1):#add if not already there
+            kept_words[word] = ""
+        
+        curr_iteration += 1
+    
+    curr_iteration = 0
+    #now ascend from the median. No need to check for noise since TF-IDF is increasing
+    while (len(kept_words) < num_words):#while under limit and not reach noise words
+        word = sorted_tfidf_words[start_pos - curr_iteration][0]
+        
+        if( kept_words.get(word,-1) == -1):#add if not already there
+            kept_words[word] = ""
+        
         curr_iteration += 1
     
     #delete words that aren't kept
