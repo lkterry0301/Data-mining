@@ -31,8 +31,13 @@ def update_progress(progress):
     sys.stdout.flush()
 
 def hash_document(doc,a,b,):
-    
+    return
 
+def jaccard_similarity_of_bit_vectors(bv1,bv2):
+    if(bv1 or bv2 == 0):
+        return 0
+    else:
+        return ((bv1 and bv2) + 0.0) / (bv1 or bv2)
 
 def jaccard_similarity(vector1,vector2):
     #the vectors are both a list of 0 and 1 where 1 indicates a word is present in this vectorized document in the article.
@@ -78,7 +83,7 @@ def baseline_similarity(vectorized_data_words, force_recalculate=False):
         for j in range (i+1,len(vectorized_data_words)):
             v1 = vectorized_data_words[i]
             v2 = vectorized_data_words[j]
-            next_row.append(jaccard_similarity(v1,v2)) 
+            next_row.append(jaccard_similarity_of_bit_vectors(v1,v2)) 
             
             progress_in_percent = ( i * len(vectorized_data_words) + j) / run_time_complexity
             update_progress( progress_in_percent ) 
@@ -105,21 +110,25 @@ def vectorized_feature_vectors_indicating_word_presence():
             if doc[1][key] > 0:
                 doc[1][key] = 1
     
-    
-    
     #vectorize    
     all_words = lab2.get_unique_words_in_tfidf_data(tfidf_smaller)
     all_class_labels = lab2.get_unique_class_labels_in_tfidf_data(tfidf_smaller)
     
-    return lab2.get_training_samples_and_class_labels_vectors(tfidf_smaller, all_words, all_class_labels), all_words
+    vectorized_data_words, vectorized_class_labels = lab2.get_training_samples_and_class_labels_vectors(tfidf_smaller, all_words, all_class_labels)
+    
+    #convert boolean lists to bit vectors
+    for i in range(0, len(vectorized_data_words)):
+        vectorized_data_words[i] = bit_vector_from_word_vector(vectorized_data_words[i])
+    
+    return vectorized_data_words, all_words
 
 def main():
     print ""
     start_time = time.time()
     
-    vectorized_data_words, vectorized_class_labels,all_words = vectorized_feature_vectors_indicating_word_presence() #all_words is the ordering of the vectorized data_words. It is the first shingle permutation
+    vectorized_data_words, word_ordering  = vectorized_feature_vectors_indicating_word_presence()
     
-    #baseline_similarity(vectorized_data_words)
+    baseline_similarity(vectorized_data_words)
     
     print "Total running time: "+str(time.time()  - start_time)+" seconds"
     print ""
