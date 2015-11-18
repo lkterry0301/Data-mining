@@ -30,8 +30,13 @@ def update_progress(progress):
     sys.stdout.write(text)
     sys.stdout.flush()
 
+def hash_document(doc,a,b,):
+    
+
+
 def jaccard_similarity(vector1,vector2):
-    #the vectors are both a list of 0 and 1 where 1 indicates a word in the article
+    #the vectors are both a list of 0 and 1 where 1 indicates a word is present in this vectorized document in the article.
+    #Thus, a 0 indicates a word is missing from the doc's vector. This indicates it should not be counted in the Jaccard similarity
     intersect_size = 0
     vec1_size = 0
     vec2_size = 1
@@ -86,28 +91,35 @@ def baseline_similarity(vectorized_data_words, force_recalculate=False):
     
     return true_similarity
 
+def bit_vector_from_word_vector(word_v):
+    word_v_as_str = "".join(map(str, word_v))
+    return int(word_v_as_str,base = 2)
+
 #no longer TF-IDF values, just whether or not the word is in the hash
 def vectorized_feature_vectors_indicating_word_presence():
     tfidf_larger,tfidf_smaller = lab2.get_feature_vectors()
     
+    #convert tfidf values to booleans
     for doc in tfidf_smaller:
         for key in doc[1].keys():
             if doc[1][key] > 0:
                 doc[1][key] = 1
     
+    
+    
     #vectorize    
     all_words = lab2.get_unique_words_in_tfidf_data(tfidf_smaller)
     all_class_labels = lab2.get_unique_class_labels_in_tfidf_data(tfidf_smaller)
     
-    return lab2.get_training_samples_and_class_labels_vectors(tfidf_smaller, all_words, all_class_labels)
+    return lab2.get_training_samples_and_class_labels_vectors(tfidf_smaller, all_words, all_class_labels), all_words
 
 def main():
     print ""
     start_time = time.time()
     
-    vectorized_data_words, vectorized_class_labels = vectorized_feature_vectors_indicating_word_presence()
+    vectorized_data_words, vectorized_class_labels,all_words = vectorized_feature_vectors_indicating_word_presence() #all_words is the ordering of the vectorized data_words. It is the first shingle permutation
     
-    baseline_similarity(vectorized_data_words)
+    #baseline_similarity(vectorized_data_words)
     
     print "Total running time: "+str(time.time()  - start_time)+" seconds"
     print ""
