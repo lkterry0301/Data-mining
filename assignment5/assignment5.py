@@ -6,11 +6,12 @@ import os
 import random
 import math
 import json
+lab2 = imp.load_source('lab2', os.getcwd()+"/../lab2/lab2.py")
 lab4 = imp.load_source('lab4', os.getcwd()+"/../assignment4/assignment4.py")
 
 primes_under_1k = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503, 509, 521, 523, 541, 547, 557, 563, 569, 571, 577, 587, 593, 599, 601, 607, 613, 617, 619, 631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691, 701, 709, 719, 727, 733, 739, 743, 751, 757, 761, 769, 773, 787, 797, 809, 811, 821, 823, 827, 829, 839, 853, 857, 859, 863, 877, 881, 883, 887, 907, 911, 919, 929, 937, 941, 947, 953, 967, 971, 977, 983, 991, 997]
 
-true_similarity_file = os.getcwd()+"/../feature_vectors/true_jaccard_similarity.dat"
+#true_similarity_file = os.getcwd()+"/../feature_vectors/true_jaccard_similarity.dat"
 
 # Copied from http://stackoverflow.com/a/15862048
 def update_progress(progress):
@@ -28,7 +29,7 @@ def update_progress(progress):
         progress = 1
         status = "Done...\r\n"
     block = int(round(barLength*progress))
-    text = "\rPercent: [{0}] {1}% {2}".format( "="*block + " "*(barLength-block), progress*100, status)
+    text = "\rPercent: [{0}] {1}% {2}".format( "="*block + " "*(barLength-block), "{:.2f}".format(progress*100), status)
     sys.stdout.write(text)
     sys.stdout.flush()
 
@@ -67,48 +68,47 @@ def jaccard_similarity(vector1,vector2):
     return jaccard_val
 
 def baseline_similarity(vectorized_data_words, force_recalculate=False):
+    """
     #check to see if baseline has already been calculated in a previous run. Load and return it if it has
     if os.path.exists(true_similarity_file) and not force_recalculate: 
         print "Using True Similarity calculations from a previous run of this lab. Loading JSON..."
         sim_file = open(true_similarity_file, "r")
         return json.loads( sim_file.read() )
+    """
     
-    print "Finding True similarity between every document pair. Started at: "+ str(time.ctime(int(time.time())))
+    print "Finding True similarity between every document pair. "+str(len(vectorized_data_words))+" documents used. Started at: "+ str(time.ctime(int(time.time())))
     
     true_similarity = list()
     run_time_complexity = len(vectorized_data_words) * len(vectorized_data_words) + 0.0 #(len(vectorized_data_words) * (len(vectorized_data_words)+1))  / (2+0.0)
+    display_progress_update_iteration = len(vectorized_data_words) / 1000
     
     #compare each file to every other file
     for i in range(0,len(vectorized_data_words)):
         next_row = list()
-        """This is wrong...
-        #speed it up a bit by realizing many comparisons will already have been made at later iterations
-        if i>0:
-            for j in range(0,i):
-                next_row.append(true_similarity[i-1][j])
-                
-                progress_in_percent = ( i * len(vectorized_data_words) + j) / run_time_complexity
-                update_progress( progress_in_percent ) 
         
-        next_row.append(1) #Jaccard imilarity to itself is 1
-        """
         for j in range (0,len(vectorized_data_words)):
             v1 = vectorized_data_words[i]
             v2 = vectorized_data_words[j]
             next_row.append(jaccard_similarity_of_bit_vectors(v1,v2)) 
-            
-            progress_in_percent = ( i * len(vectorized_data_words) + j) / run_time_complexity
+        
+        #Try to limit display progress changes as writing to output is slow
+        if( i % display_progress_update_iteration == 0 or i == (len(vectorized_data_words)-1) ):
+            progress_in_percent = ( (i+1) * len(vectorized_data_words) ) / run_time_complexity
             update_progress( progress_in_percent ) 
         
         true_similarity.append(next_row)
-    
-    
+        
+    """
+    print "Writting baseline similarity to file"
+    if os.path.exists(true_similarity_file):
+        os.remove(true_similarity_file)
     sim_file = open(true_similarity_file,'w')
     json.dump(true_similarity, sim_file)
+    """
     
     return true_similarity
 
-
+"""
 def check_primality(x):
     could_be_prime = fast_might_be_prime_check(x)
     if could_be_prime =="maybe" :
@@ -171,6 +171,13 @@ def next_biggest_prime(x):
         x += 2
         if check_primality(x):
             return x
+"""
+def next_biggest_prime(x):  
+    for i in range(0,len(primes_under_1k)):
+        if primes_under_1k[i] > x:
+            return primes_under_1k[i]
+    
+    raise ValueError('Prime could not be found')
 
 def bit_vector_from_word_vector(word_v):
     word_v_as_str = "".join(map(str, word_v))
@@ -178,7 +185,14 @@ def bit_vector_from_word_vector(word_v):
 
 #no longer TF-IDF values, just whether or not the word is in the hash
 def vectorized_feature_vectors_indicating_word_presence():
-    word_vectors,class_labels = lab4.get_sample_data(False,False)
+    #Use lab2 to get vectors (all ~21k samples)
+    tfidf_larger,tfidf_smaller = lab2.get_feature_vectors()
+    all_words = lab2.get_unique_words_in_tfidf_data(tfidf_smaller)
+    all_class_labels = lab2.get_unique_class_labels_in_tfidf_data(tfidf_smaller) 
+    word_vectors, vectorized_class_labels = lab2.get_training_samples_and_class_labels_vectors(tfidf_smaller, all_words, all_class_labels)
+    
+    #Use lab4 to get vectors (5k samples)
+    #word_vectors,class_labels = lab4.get_sample_data(False,False)
     
     for i in range(0,len(word_vectors)):        
         #convert tfidf values to booleans
@@ -197,7 +211,7 @@ def main():
     
     vectorized_data_words  = vectorized_feature_vectors_indicating_word_presence()
     
-    baseline_similarity(vectorized_data_words)
+    baseline_similarity(vectorized_data_words,True)
     
     print "Total running time: "+str(time.time()  - start_time)+" seconds"
     print ""
