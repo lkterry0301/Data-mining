@@ -132,31 +132,29 @@ def similarity_calculations(vectorized_data_words):#, force_recalculate=False):
     currently_calculating_signature_similarity = isinstance(vectorized_data_words[0],list)
     
     similarity = list()
-    run_time_complexity = len(vectorized_data_words) * len(vectorized_data_words) #(len(vectorized_data_words) * (len(vectorized_data_words)-1) )  / 2
-    display_progress_update_iteration = len(vectorized_data_words) / 300
-    
+    run_time_complexity =  (len(vectorized_data_words) * (len(vectorized_data_words)+1) )  / 2 
+    display_progress_update_iteration = run_time_complexity / 700
+    iteration = 0
     
     #compare each file to every other file
-    for i in range(0,len(vectorized_data_words)):
+    for i in range(0,len(vectorized_data_words)):        
         next_row = list()
         
-        for j in range (i+1,len(vectorized_data_words)):
-            v1 = vectorized_data_words[i]
-            v2 = vectorized_data_words[j]
+        for j in range (i,len(vectorized_data_words)):
             """
             if currently_calculating_signature_similarity:
                 jaccard_similarity_of_signatures(v1,v2)
             else: 
             """
-            next_row.append(jaccard_similarity_of_bit_vectors(v1,v2)) 
-        
-        #Try to limit display progress changes as writing to output is slow
-        if( i % display_progress_update_iteration == 0 or i == (len(vectorized_data_words)-1) ):
-            progress_in_percent = ( (i+1.0) * len(vectorized_data_words) ) / run_time_complexity
-            update_progress( progress_in_percent ) 
+            next_row.append(jaccard_similarity_of_bit_vectors( vectorized_data_words[i] , vectorized_data_words[j])) 
+            
+            iteration += 1
+            if( iteration % display_progress_update_iteration == 0 ):#Try to limit display progress changes as writing to output is slow
+                progress_float = (iteration + 0.0) / run_time_complexity
+                update_progress( progress_float )
         
         similarity.append(next_row)
-        
+    
     """
     print "Writting baseline similarity to file"
     if os.path.exists(true_similarity_file):
