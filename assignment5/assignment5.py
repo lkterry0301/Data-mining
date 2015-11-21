@@ -52,12 +52,12 @@ Similarity (A,B): (A & B) / (A | B) = 2 / 6 = .33
 """
 def convert_signature_list_to_bit_vector(signature, num_hash_functions):
     binary_signature = ""
-    which_hash_bucket_is_filled = [0] * num_hash_functions
     
     for sig_val in signature:
+        which_hash_bucket_is_filled = [0] * num_hash_functions
         which_hash_bucket_is_filled[sig_val] = 1 
+        binary_signature += "".join(map(str, which_hash_bucket_is_filled)) #join list into string
     
-    binary_signature += "".join(map(str, which_hash_bucket_is_filled)) #join list into string
     return int(binary_signature, base = 2)
 
 def create_hash_signatures(vectorized_data_words,num_hash_functions):
@@ -110,6 +110,15 @@ def jaccard_similarity_of_bit_vectors(bv1,bv2):
     else:
         return (bv1 and bv2 + 0.0) / (or_val)
 
+def jaccard_similarity_of_signatures(s1,s2):
+    intersect_size = 0
+    
+    for i in range(0,len(s1)):
+        if(s1[i] == s2[i]):
+            intersect_size += 1
+    
+    return (intersect_size+0.0) / (len(s1) * 2 - intersect_size)
+
 def similarity_calculations(vectorized_data_words):#, force_recalculate=False):
     start_time = time.time()
     print "Running similarity calculations"
@@ -128,7 +137,12 @@ def similarity_calculations(vectorized_data_words):#, force_recalculate=False):
         next_row = list()
         
         for j in range (i,len(vectorized_data_words)):
-            next_row.append(jaccard_similarity_of_bit_vectors( vectorized_data_words[i] , vectorized_data_words[j]))
+            jac_sim = 0
+            if currently_calculating_signature_similarity:
+                jac_sim = jaccard_similarity_of_signatures( vectorized_data_words[i] , vectorized_data_words[j] )
+            else:
+                jac_sim = jaccard_similarity_of_bit_vectors( vectorized_data_words[i] , vectorized_data_words[j] )
+            next_row.append(jac_sim)
             
             iteration += 1
             if( iteration % display_progress_update_iteration == 0 ):#Try to limit display progress changes as writing to output is slow
