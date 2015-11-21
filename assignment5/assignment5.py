@@ -117,6 +117,7 @@ def jaccard_similarity_of_signatures(sig1,sig2):
 """
 def similarity_calculations(vectorized_data_words):#, force_recalculate=False):
     """
+    #Data is WAY WAY too big to write to a file
     #check to see if baseline has already been calculated in a previous run. Load and return it if it has
     if os.path.exists(true_similarity_file) and not force_recalculate: 
         print "Using True Similarity calculations from a previous run of this lab. Loading JSON..."
@@ -150,7 +151,7 @@ def similarity_calculations(vectorized_data_words):#, force_recalculate=False):
             next_row.append(jaccard_similarity_of_bit_vectors(v1,v2)) 
         
         #Try to limit display progress changes as writing to output is slow
-        if( i % display_progress_update_iteration == 0 or i > (len(vectorized_data_words)-100) ):
+        if( i % display_progress_update_iteration == 0 or i > (len(vectorized_data_words)-1) ):
             progress_in_percent = ( (i+1.0) * len(vectorized_data_words) ) / run_time_complexity
             update_progress( progress_in_percent ) 
         
@@ -248,21 +249,23 @@ def bit_vectors_of_documents():
     #Use lab4 to get vectors (5k samples)
     #word_vectors,class_labels = lab4.get_sample_data(False,False)
     
-    for i in range(0,len(word_vectors)):        
+    for i in range(0,len(word_vectors)): 
+        boolean_val_str = ""
         #convert tfidf values to booleans
         for j in range(0,len(word_vectors[i])):
             if word_vectors[i][j] > 0:
-                word_vectors[i][j] = 1
+                boolean_val_str += 1
+            else:
+                boolean_val_str += 0
         
         #convert boolean list to bit vector (number)
-        word_vectors[i] = "".join(map(str, word_vectors[i])) #join list into string
-        word_vectors[i] = int(word_vectors[i], base = 2) #parse string to base 2 number
+        word_vectors[i] = int(boolean_val_str, base = 2) #parse string to base 2 number
     
     return word_vectors
 
 def hash_efficiency_and_efficacy(vectorized_data_words, true_similarity, num_hashes):
-    start_time = time.time()
     print "Finding efficiency and efficacy of "+str(num_hashes)+" valued document hash signature" 
+    start_time = time.time()
     
     all_doc_signatures = create_hash_signatures(vectorized_data_words, num_hashes)
     siginature_estimated_similarity = similarity_calculations(all_doc_signatures)
@@ -280,11 +283,11 @@ def main():
     
     true_similarity = similarity_calculations(vectorized_data_words)
     
-    hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,16)
-    hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,32)
-    hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,64)
-    hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,128)
-    hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,256)       
+    #hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,16)
+    #hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,32)
+    #hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,64)
+    #hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,128)
+    #hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,256)       
     
     
     print "Total running time: "+str(time.time()  - start_time)+" seconds"
