@@ -133,7 +133,7 @@ def similarity_calculations(vectorized_data_words):#, force_recalculate=False):
     
     similarity = list()
     run_time_complexity = len(vectorized_data_words) * len(vectorized_data_words) #(len(vectorized_data_words) * (len(vectorized_data_words)-1) )  / 2
-    display_progress_update_iteration = len(vectorized_data_words) / 1000
+    display_progress_update_iteration = len(vectorized_data_words) / 300
     
     
     #compare each file to every other file
@@ -151,7 +151,7 @@ def similarity_calculations(vectorized_data_words):#, force_recalculate=False):
             next_row.append(jaccard_similarity_of_bit_vectors(v1,v2)) 
         
         #Try to limit display progress changes as writing to output is slow
-        if( i % display_progress_update_iteration == 0 or i > (len(vectorized_data_words)-1) ):
+        if( i % display_progress_update_iteration == 0 or i == (len(vectorized_data_words)-1) ):
             progress_in_percent = ( (i+1.0) * len(vectorized_data_words) ) / run_time_complexity
             update_progress( progress_in_percent ) 
         
@@ -249,17 +249,15 @@ def bit_vectors_of_documents():
     #Use lab4 to get vectors (5k samples)
     #word_vectors,class_labels = lab4.get_sample_data(False,False)
     
-    for i in range(0,len(word_vectors)): 
-        boolean_val_str = ""
+    for i in range(0,len(word_vectors)):        
         #convert tfidf values to booleans
         for j in range(0,len(word_vectors[i])):
             if word_vectors[i][j] > 0:
-                boolean_val_str += 1
-            else:
-                boolean_val_str += 0
+                word_vectors[i][j] = 1
         
         #convert boolean list to bit vector (number)
-        word_vectors[i] = int(boolean_val_str, base = 2) #parse string to base 2 number
+        bit_vector_str = "".join(map(str, word_vectors[i])) #join list into string
+        word_vectors[i] = int(bit_vector_str, base = 2) #parse string to base 2 number
     
     return word_vectors
 
