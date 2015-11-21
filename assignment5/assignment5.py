@@ -52,12 +52,12 @@ Similarity (A,B): (A & B) / (A | B) = 2 / 6 = .33
 """
 def convert_signature_list_to_bit_vector(signature, num_hash_functions):
     binary_signature = ""
+    which_hash_bucket_is_filled = [0] * num_hash_functions
     
     for sig_val in signature:
-        which_hash_bucket_is_filled = [0] * num_hash_functions
         which_hash_bucket_is_filled[sig_val] = 1 
-        binary_signature += "".join(map(str, which_hash_bucket_is_filled)) #join list into string
     
+    binary_signature += "".join(map(str, which_hash_bucket_is_filled)) #join list into string
     return int(binary_signature, base = 2)
 
 def create_hash_signatures(vectorized_data_words,num_hash_functions):
@@ -106,12 +106,13 @@ def create_hash_function_coefficients(num_functions):
 def jaccard_similarity_of_bit_vectors(bv1,bv2):
     or_val = bv1 | bv2
     if(or_val == 0):
-        return 0
+        return 1
     else:
         return (bv1 and bv2 + 0.0) / (or_val)
 
 def similarity_calculations(vectorized_data_words):#, force_recalculate=False):
     start_time = time.time()
+    print "Running similarity calculations"
     
     #finding true similarity => vectorized_data_words is composed of bit vectors (numbers)
     #finding signature similarity => vectorized_data_words is composed of lists of numbers (signature)
@@ -133,6 +134,7 @@ def similarity_calculations(vectorized_data_words):#, force_recalculate=False):
             if( iteration % display_progress_update_iteration == 0 ):#Try to limit display progress changes as writing to output is slow
                 progress_float = (iteration + 0.0) / run_time_complexity
                 update_progress( progress_float )
+        
         similarity.append(next_row)
     
     print ""
@@ -167,8 +169,7 @@ def bit_vectors_of_documents():
                 word_vectors[i][j] = 1
         
         #convert boolean list to bit vector (number)
-        bit_vector_str = "".join(map(str, word_vectors[i])) #join list into string
-        word_vectors[i] = int(bit_vector_str, base = 2) #parse string to base 2 number
+        word_vectors[i] = int( "".join(map(str, word_vectors[i])) , base = 2) #join boolean list into string and parse string to base 2 number
     
     return word_vectors
 
@@ -194,10 +195,10 @@ def main():
     true_similarity = similarity_calculations(vectorized_data_words)
     
     hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,16)
-    #hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,32)
-    #hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,64)
-    #hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,128)
-    #hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,256)       
+    hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,32)
+    hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,64)
+    hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,128)
+    hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,256)       
     
     
     print "Total running time: "+str(time.time()  - start_time)+" seconds"
