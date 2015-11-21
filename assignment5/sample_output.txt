@@ -1,0 +1,60 @@
+python assignment5.py 
+
+Getting representative sampled data...
+Representative sampling yields a dataset with 10000 entries.
+
+Finding true Jaccard similarity between every document...
+Running similarity calculations
+Percent: [====================] 100.00% 
+Similarity calculation took  36.8452019691 seconds
+
+Finding efficiency and efficacy of 16 valued document hash signatures
+Creating document signatures...
+It took 0.158515930176seconds to create document signatures with 16 hash functions
+Running similarity calculations
+Percent: [====================] 100.00% 
+Similarity calculation took  27.0182580948 seconds
+Calculating signature estimation Mean Squared Error...
+Total Mean Squared Error: 2070.29099677
+
+
+Finding efficiency and efficacy of 32 valued document hash signatures
+Creating document signatures...
+It took 0.284228086472seconds to create document signatures with 32 hash functions
+Running similarity calculations
+Percent: [====================] 100.00% 
+Similarity calculation took  26.6531741619 seconds
+Calculating signature estimation Mean Squared Error...
+Total Mean Squared Error: 2123.4362022
+
+
+Finding efficiency and efficacy of 64 valued document hash signatures
+Creating document signatures...
+It took 0.525451898575seconds to create document signatures with 64 hash functions
+Running similarity calculations
+Percent: [====================] 100.00% 
+Similarity calculation took  35.7617030144 seconds
+Calculating signature estimation Mean Squared Error...
+Total Mean Squared Error: 2130.03215311
+
+
+Finding efficiency and efficacy of 128 valued document hash signatures
+Creating document signatures...
+It took 1.03470277786seconds to create document signatures with 128 hash functions
+Running similarity calculations
+Percent: [====================] 100.00% 
+Similarity calculation took  36.0993020535 seconds
+Calculating signature estimation Mean Squared Error...
+Total Mean Squared Error: 2169.3347359
+
+
+Finding efficiency and efficacy of 256 valued document hash signatures
+Creating document signatures...
+It took 2.02484178543seconds to create document signatures with 256 hash functions
+Running similarity calculations
+Percent: [====================] 100.00% 
+Similarity calculation took  35.1216471195 seconds
+Calculating signature estimation Mean Squared Error...
+Total Mean Squared Error: 2045.96386776
+
+Total running time: 280.335343122 seconds

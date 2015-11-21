@@ -41,6 +41,21 @@ The output to the console is
 2. Clustering quality: Number of clusters created, Information Gain of clusters, average cluster radius (from centroid), average cluster Sum of Squared Error, and standard deviation of all cluster sizes (number of data points).
 3. Total run time
 
+
+####Lab 5 Description
+
+To run this program navigate to the assignment5 directory and run 
+```
+python assignment5.py #This takes about 280 seconds to run
+```
+
+The output to the console is 
+
+1. The time it takes for true JAccard similarity to run
+1. Efficacy and efficiency of document hash signatures: Time to build signatures, time to compare to true value, and Mean Squared Error from true value
+3. Total run time
+
+
 ####Resources
 
 * [Class Website](http://web.cse.ohio-state.edu/~srini/674/)
