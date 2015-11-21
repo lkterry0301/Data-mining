@@ -33,41 +33,89 @@ def update_progress(progress):
     sys.stdout.write(text)
     sys.stdout.flush()
 
-def doc_signature(doc,hash_functions_coefficients):
-    p = next_biggest_prime(doc)
-    hash_val = ( a * doc + b ) % p
-    
 
-def create_hash_functions(num_functions):
+def doc_signature_as_bit_vector(doc,hash_functions_coefficients, prime):
+    signature = list()
+    
+    for coeff in hash_functions_coefficients:
+        hash_val = ( ( coeff[0] * doc + coeff[1] ) % prime ) % len(hash_functions_coefficients)
+    
+    return convert_signature_list_to_bit_vector(signature, len(hash_functions_coefficients)  ) 
+
+"""
+Converting sigantures to bit vectors is a little tricky. The signature is an ordered list of numbers representing hash bucket values. Every document has a signature of length num_hash_functions. In order for bitwise comparisons to be accurate, each value in the signature list must be converted to its binary representation and appended to a string. Finally the string is parsed into base 2.
+ex: 4 hash functions
+signature A = [0, 1, 1, 3] = 000 001 001 011 
+signature B = [3, 1, 1, 0] = 011 001 001 000
+Similarity (A,B): (A & B) / (A | B) = 2 / 6 = .33 
+"""
+def convert_signature_list_to_bit_vector(signature, num_hash_functions):
+    binary_signature = ""
+    
+    for sig_val in signature:
+        which_hash_bucket_is_filled = [0] * num_hashes
+        which_hash_bucket_is_filled[sig_val] = 1
+        which_hash_bucket_is_filled = "".join(map(str, word_v)) #join list into string
+        
+        binary_signature += which_hash_bucket_is_filled
+    
+    return int(binary_signature, base = 2)
+
+def create_hash_signatures(vectorized_data_words,num_hash_functions):
+    print "Creating Hash Signatures using "+str(num_hash_functions)+" hash functions"
+    
+    all_doc_signatures = list()
+    hash_coefficients, prime = create_hash_function_coefficients(num_hash_functions)
+    
+    for doc_bit_vector in vectorized_data_words:
+        signature = doc_signature_as_bit_vector(doc_bit_vector,hash_coefficients, prime)
+        all_doc_signatures.append(signature)
+    
+    return all_doc_signatures
+
+#Mean Squared Error
+def hash_similarity_MSE(true_similarity, hash_similarity):
+    mse = 0
+    
+    for i in range(0,true_similarity): # len(true_similarity) == len(hash_similarity)
+        mse += pow(true_similarity[i] - hash_similarity[i],2)
+    
+    return mse / len(true_similarity)
+
+"""
+Using Approximate Linear Hashing, a number of desired hash functions is given and they are constructed via 
+h(x) = ((a*x+b) % P ) % N), where 
+N is the number of hash functions, p is a prime greater than N, and
+It appears that A is in the range [1, prime-1] and B is in the range [0,prime-1] --> https://www.cs.berkeley.edu/~daw/teaching/cs170-s03/Notes/lecture9.pdf
+"""
+def create_hash_function_coefficients(num_functions):
     hash_functions_coefficients = list()
+    p = next_biggest_prime( len(hash_functions_coefficients) )
     
     for i in range(0,num_functions):
-        hash_functions_coefficients.append([random.randrange(1,),random.randrange()])
+        hash_functions_coefficients.append([random.randrange(1,p),random.randrange(0,p)])
     
-    return hash_functions_coefficients
+    return hash_functions_coefficients, p
 
 def jaccard_similarity_of_bit_vectors(bv1,bv2):
-    if(bv1 or bv2 == 0):
+    or_val = bv1 | bv2
+    if(or_val == 0):
         return 0
     else:
-        return ((bv1 and bv2) + 0.0) / (bv1 or bv2)
-
-def jaccard_similarity(vector1,vector2):
-    #the vectors are both a list of 0 and 1 where 1 indicates a word is present in this vectorized document in the article.
-    #Thus, a 0 indicates a word is missing from the doc's vector. This indicates it should not be counted in the Jaccard similarity
+        return ((bv1 and bv2) + 0.0) / (or_val)
+"""
+def jaccard_similarity_of_signatures(sig1,sig2):
+    #signatures of document vectors are a list of numbers. Order matters! Thus cannot use set union/intersection
     intersect_size = 0
-    vec1_size = 0
-    vec2_size = 1
     
-    for i in range(0,len(vector1)):
-        vec1_size += vector1[i] + 0.0
-        vec2_size += vector2[i] + 0.0
-        intersect_size += (vector1[i] and vector2[i]) + 0.0
+    for i in range(0,len(sig1)):#len sig1 == len sig2
+        if(sig1[i] and sig2[i]):
+            intersect_size += 1
     
-    jaccard_val = intersect_size / (vec1_size + vec2_size - intersect_size)
+    jaccard_val = intersect_size / ( len(sig1) * 2 - intersect_size)
     return jaccard_val
-
-def baseline_similarity(vectorized_data_words, force_recalculate=False):
+"""
+def similarity_calculations(vectorized_data_words):#, force_recalculate=False):
     """
     #check to see if baseline has already been calculated in a previous run. Load and return it if it has
     if os.path.exists(true_similarity_file) and not force_recalculate: 
@@ -76,27 +124,37 @@ def baseline_similarity(vectorized_data_words, force_recalculate=False):
         return json.loads( sim_file.read() )
     """
     
-    print "Finding True similarity between every document pair. "+str(len(vectorized_data_words))+" documents used. Started at: "+ str(time.ctime(int(time.time())))
+    print "Finding similarity between every "+str(len(vectorized_data_words))+" documents pairing. "
     
-    true_similarity = list()
-    run_time_complexity = len(vectorized_data_words) * len(vectorized_data_words) + 0.0 #(len(vectorized_data_words) * (len(vectorized_data_words)+1))  / (2+0.0)
+    #finding true similarity => vectorized_data_words is composed of bit vectors (numbers)
+    #finding signature similarity => vectorized_data_words is composed of lists of numbers (signature)
+    currently_calculating_signature_similarity = isinstance(vectorized_data_words[0],list)
+    
+    similarity = list()
+    run_time_complexity = len(vectorized_data_words) * len(vectorized_data_words) #(len(vectorized_data_words) * (len(vectorized_data_words)-1) )  / 2
     display_progress_update_iteration = len(vectorized_data_words) / 1000
+    
     
     #compare each file to every other file
     for i in range(0,len(vectorized_data_words)):
         next_row = list()
         
-        for j in range (0,len(vectorized_data_words)):
+        for j in range (i+1,len(vectorized_data_words)):
             v1 = vectorized_data_words[i]
             v2 = vectorized_data_words[j]
+            """
+            if currently_calculating_signature_similarity:
+                jaccard_similarity_of_signatures(v1,v2)
+            else: 
+            """
             next_row.append(jaccard_similarity_of_bit_vectors(v1,v2)) 
         
         #Try to limit display progress changes as writing to output is slow
-        if( i % display_progress_update_iteration == 0 or i == (len(vectorized_data_words)-1) ):
-            progress_in_percent = ( (i+1) * len(vectorized_data_words) ) / run_time_complexity
+        if( i % display_progress_update_iteration == 0 or i > (len(vectorized_data_words)-100) ):
+            progress_in_percent = ( (i+1.0) * len(vectorized_data_words) ) / run_time_complexity
             update_progress( progress_in_percent ) 
         
-        true_similarity.append(next_row)
+        similarity.append(next_row)
         
     """
     print "Writting baseline similarity to file"
@@ -105,8 +163,7 @@ def baseline_similarity(vectorized_data_words, force_recalculate=False):
     sim_file = open(true_similarity_file,'w')
     json.dump(true_similarity, sim_file)
     """
-    
-    return true_similarity
+    return similarity
 
 """
 def check_primality(x):
@@ -179,12 +236,9 @@ def next_biggest_prime(x):
     
     raise ValueError('Prime could not be found')
 
-def bit_vector_from_word_vector(word_v):
-    word_v_as_str = "".join(map(str, word_v))
-    return int(word_v_as_str,base = 2)
-
-#no longer TF-IDF values, just whether or not the word is in the hash
-def vectorized_feature_vectors_indicating_word_presence():
+#no longer TF-IDF values, just whether or not the word is in the hash. Then translated to a bit vector (number)
+# EX) doc = {0, 1.77, .02, 0} TF-IDF values --> doc {0,1,1,0} (word 2 and 3 are present in that doc) --> doc = 0110 = 6
+def bit_vectors_of_documents():
     #Use lab2 to get vectors (all ~21k samples)
     tfidf_larger,tfidf_smaller = lab2.get_feature_vectors()
     all_words = lab2.get_unique_words_in_tfidf_data(tfidf_smaller)
@@ -200,18 +254,38 @@ def vectorized_feature_vectors_indicating_word_presence():
             if word_vectors[i][j] > 0:
                 word_vectors[i][j] = 1
         
-        #convert booleans to bit vector
-        word_vectors[i] = bit_vector_from_word_vector(word_vectors[i])
+        #convert boolean list to bit vector (number)
+        word_vectors[i] = "".join(map(str, word_vectors[i])) #join list into string
+        word_vectors[i] = int(word_vectors[i], base = 2) #parse string to base 2 number
     
     return word_vectors
+
+def hash_efficiency_and_efficacy(vectorized_data_words, true_similarity, num_hashes):
+    start_time = time.time()
+    print "Finding efficiency and efficacy of "+str(num_hashes)+" valued document hash signature" 
+    
+    all_doc_signatures = create_hash_signatures(vectorized_data_words, num_hashes)
+    siginature_estimated_similarity = similarity_calculations(all_doc_signatures)
+    
+    print "It took  "+str(time.time()  - start_time)+" seconds to create a "+str(num_hashes)+" signature and calculate their similarities"
+    
+    estimate_error = hash_similarity_MSE(true_similarity,siginature_estimated_similarity)
+    
+    print "Total Mean Squared Error: "+ str(estimate_error)
 
 def main():
     print ""
     start_time = time.time()
+    vectorized_data_words  = bit_vectors_of_documents()
     
-    vectorized_data_words  = vectorized_feature_vectors_indicating_word_presence()
+    true_similarity = similarity_calculations(vectorized_data_words)
     
-    baseline_similarity(vectorized_data_words,True)
+    hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,16)
+    hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,32)
+    hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,64)
+    hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,128)
+    hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,256)       
+    
     
     print "Total running time: "+str(time.time()  - start_time)+" seconds"
     print ""
