@@ -34,13 +34,14 @@ def update_progress(progress):
     sys.stdout.flush()
 
 
-def doc_signature_as_bit_vector(doc,hash_functions_coefficients, prime):
+def doc_signature(doc,hash_functions_coefficients, prime):
     signature = list()
     
     for coeff in hash_functions_coefficients:
         hash_val = ( ( coeff[0] * doc + coeff[1] ) % prime ) % len(hash_functions_coefficients)
+        signature.append(hash_val)
     
-    return convert_signature_list_to_bit_vector(signature, len(hash_functions_coefficients)  ) 
+    return signature
 
 """
 Converting sigantures to bit vectors is a little tricky. The signature is an ordered list of numbers representing hash bucket values. Every document has a signature of length num_hash_functions. In order for bitwise comparisons to be accurate, each value in the signature list must be converted to its binary representation and appended to a string. Finally the string is parsed into base 2.
@@ -53,32 +54,37 @@ def convert_signature_list_to_bit_vector(signature, num_hash_functions):
     binary_signature = ""
     
     for sig_val in signature:
-        which_hash_bucket_is_filled = [0] * num_hashes
-        which_hash_bucket_is_filled[sig_val] = 1
-        which_hash_bucket_is_filled = "".join(map(str, word_v)) #join list into string
-        
-        binary_signature += which_hash_bucket_is_filled
+        which_hash_bucket_is_filled = [0] * num_hash_functions
+        which_hash_bucket_is_filled[sig_val] = 1 
+        binary_signature += "".join(map(str, which_hash_bucket_is_filled)) #join list into string
     
     return int(binary_signature, base = 2)
 
 def create_hash_signatures(vectorized_data_words,num_hash_functions):
-    print "Creating Hash Signatures using "+str(num_hash_functions)+" hash functions"
+    print "Creating document signatures..."
+    start_time = time.time()
     
     all_doc_signatures = list()
     hash_coefficients, prime = create_hash_function_coefficients(num_hash_functions)
     
     for doc_bit_vector in vectorized_data_words:
-        signature = doc_signature_as_bit_vector(doc_bit_vector,hash_coefficients, prime)
-        all_doc_signatures.append(signature)
+        signature = doc_signature(doc_bit_vector,hash_coefficients, prime)
+        signature_bit_vector = convert_signature_list_to_bit_vector(signature, num_hash_functions  ) 
+        
+        #all_doc_signatures.append( signature )
+        all_doc_signatures.append( signature_bit_vector )
     
+    print "It took "+str(time.time() - start_time)+"seconds to create document signatures with "+str(num_hash_functions)+" hash functions"
     return all_doc_signatures
 
 #Mean Squared Error
 def hash_similarity_MSE(true_similarity, hash_similarity):
+    print "Calculating signature estimation Mean Squared Error..."
     mse = 0
     
-    for i in range(0,true_similarity): # len(true_similarity) == len(hash_similarity)
-        mse += pow(true_similarity[i] - hash_similarity[i],2)
+    for i in range(0,len(true_similarity)): # len(true_similarity) == len(hash_similarity)
+        for j in range(0, len(true_similarity[i]) ):# len(true_similarity[i]) == len(hash_similarity[i])
+            mse += pow(true_similarity[i][j] - hash_similarity[i][j],2)
     
     return mse / len(true_similarity)
 
@@ -90,7 +96,7 @@ It appears that A is in the range [1, prime-1] and B is in the range [0,prime-1]
 """
 def create_hash_function_coefficients(num_functions):
     hash_functions_coefficients = list()
-    p = next_biggest_prime( len(hash_functions_coefficients) )
+    p = next_biggest_prime( num_functions )
     
     for i in range(0,num_functions):
         hash_functions_coefficients.append([random.randrange(1,p),random.randrange(0,p)])
@@ -102,10 +108,10 @@ def jaccard_similarity_of_bit_vectors(bv1,bv2):
     if(or_val == 0):
         return 0
     else:
-        return ((bv1 and bv2) + 0.0) / (or_val)
+        return (bv1 and bv2 + 0.0) / (or_val)
 
 def similarity_calculations(vectorized_data_words):#, force_recalculate=False):
-    print "Finding similarity between every "+str(len(vectorized_data_words))+" documents pairing. "
+    start_time = time.time()
     
     #finding true similarity => vectorized_data_words is composed of bit vectors (numbers)
     #finding signature similarity => vectorized_data_words is composed of lists of numbers (signature)
@@ -128,6 +134,9 @@ def similarity_calculations(vectorized_data_words):#, force_recalculate=False):
                 progress_float = (iteration + 0.0) / run_time_complexity
                 update_progress( progress_float )
         similarity.append(next_row)
+    
+    print ""
+    print "Similarity calculation took  "+str(time.time()  - start_time)+" seconds"
     
     return similarity
 
@@ -164,26 +173,27 @@ def bit_vectors_of_documents():
     return word_vectors
 
 def hash_efficiency_and_efficacy(vectorized_data_words, true_similarity, num_hashes):
-    print "Finding efficiency and efficacy of "+str(num_hashes)+" valued document hash signature" 
+    print ""
+    print "Finding efficiency and efficacy of "+str(num_hashes)+" valued document hash signatures" 
     start_time = time.time()
     
     all_doc_signatures = create_hash_signatures(vectorized_data_words, num_hashes)
     siginature_estimated_similarity = similarity_calculations(all_doc_signatures)
-    
-    print "It took  "+str(time.time()  - start_time)+" seconds to create a "+str(num_hashes)+" signature and calculate their similarities"
-    
     estimate_error = hash_similarity_MSE(true_similarity,siginature_estimated_similarity)
     
     print "Total Mean Squared Error: "+ str(estimate_error)
+    print ""
 
 def main():
     print ""
     start_time = time.time()
     vectorized_data_words  = bit_vectors_of_documents()
     
+    print ""
+    print "Finding true Jaccard similarity between every document..."
     true_similarity = similarity_calculations(vectorized_data_words)
     
-    #hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,16)
+    hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,16)
     #hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,32)
     #hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,64)
     #hash_efficiency_and_efficacy(vectorized_data_words,true_similarity,128)

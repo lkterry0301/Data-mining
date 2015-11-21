@@ -271,7 +271,7 @@ def get_sample_data(l2_normalize,redraw_sampled_data = False):
         vectorized_data_words, vectorized_class_labels = vectorize_tfidf(tfidf_smaller)
         vectorized_data_words, vectorized_class_labels = stratified_sample_data(vectorized_data_words, vectorized_class_labels, 
                                                                                num_sampling_partitions=20,
-                                                                               total_desired_num_samples=5000)
+                                                                               total_desired_num_samples=10000)
         
         output_sample_data_file = open(sampled_data_path,'w')
         json.dump( [vectorized_data_words, vectorized_class_labels] ,output_sample_data_file)
