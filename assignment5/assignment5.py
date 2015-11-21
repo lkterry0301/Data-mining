@@ -103,28 +103,8 @@ def jaccard_similarity_of_bit_vectors(bv1,bv2):
         return 0
     else:
         return ((bv1 and bv2) + 0.0) / (or_val)
-"""
-def jaccard_similarity_of_signatures(sig1,sig2):
-    #signatures of document vectors are a list of numbers. Order matters! Thus cannot use set union/intersection
-    intersect_size = 0
-    
-    for i in range(0,len(sig1)):#len sig1 == len sig2
-        if(sig1[i] and sig2[i]):
-            intersect_size += 1
-    
-    jaccard_val = intersect_size / ( len(sig1) * 2 - intersect_size)
-    return jaccard_val
-"""
+
 def similarity_calculations(vectorized_data_words):#, force_recalculate=False):
-    """
-    #Data is WAY WAY too big to write to a file
-    #check to see if baseline has already been calculated in a previous run. Load and return it if it has
-    if os.path.exists(true_similarity_file) and not force_recalculate: 
-        print "Using True Similarity calculations from a previous run of this lab. Loading JSON..."
-        sim_file = open(true_similarity_file, "r")
-        return json.loads( sim_file.read() )
-    """
-    
     print "Finding similarity between every "+str(len(vectorized_data_words))+" documents pairing. "
     
     #finding true similarity => vectorized_data_words is composed of bit vectors (numbers)
@@ -141,93 +121,16 @@ def similarity_calculations(vectorized_data_words):#, force_recalculate=False):
         next_row = list()
         
         for j in range (i,len(vectorized_data_words)):
-            """
-            if currently_calculating_signature_similarity:
-                jaccard_similarity_of_signatures(v1,v2)
-            else: 
-            """
-            next_row.append(jaccard_similarity_of_bit_vectors( vectorized_data_words[i] , vectorized_data_words[j])) 
+            next_row.append(jaccard_similarity_of_bit_vectors( vectorized_data_words[i] , vectorized_data_words[j]))
             
             iteration += 1
             if( iteration % display_progress_update_iteration == 0 ):#Try to limit display progress changes as writing to output is slow
                 progress_float = (iteration + 0.0) / run_time_complexity
                 update_progress( progress_float )
-        
         similarity.append(next_row)
     
-    """
-    print "Writting baseline similarity to file"
-    if os.path.exists(true_similarity_file):
-        os.remove(true_similarity_file)
-    sim_file = open(true_similarity_file,'w')
-    json.dump(true_similarity, sim_file)
-    """
     return similarity
 
-"""
-def check_primality(x):
-    could_be_prime = fast_might_be_prime_check(x)
-    if could_be_prime =="maybe" :
-        return miller_rabin(x)
-    elif could_be_prime == "isPrime":
-        return True
-    
-    return False
-
-#Miller-Rabin primality test. iteration signifies the accuracy of the test
-#at this point, the passed in number is guaranteed to be an odd number not divisible by all the primes under 1k.
-#source: https://gist.github.com/bnlucas/5857478
-def miller_rabin(n, k=20):
-	if n == 2:
-		return True
-	if not n & 1:
-		return False
-
-	def check(a, s, d, n):
-		x = pow(a, d, n)
-		if x == 1:
-			return True
-		for i in xrange(s - 1):
-			if x == n - 1:
-				return True
-			x = pow(x, 2, n)
-		return x == n - 1
-
-	s = 0
-	d = n - 1
-
-	while d % 2 == 0:
-		d >>= 1
-		s += 1
-
-	for i in xrange(k):
-		a = random.randrange(2, n - 1)
-		if not check(a, s, d, n):
-			return False
-	return True
-
-#Check if a number MIGHT be prime by seeing if it is divisble by the small primes first
-def fast_might_be_prime_check(x):
-    for prime in primes_under_1k:
-        if x != prime and x % prime == 0:
-            return "no"
-        elif x == prime:
-            return "isPrime"
-    
-    return "maybe"
-
-#Bertrand's theorem: for every n > 1 there is always at least one prime p such that n < p < 2n.
-def next_biggest_prime(x):    
-    if x%2 ==0:
-        x+=1
-        if check_primality(x):
-            return x
-    
-    while(True):
-        x += 2
-        if check_primality(x):
-            return x
-"""
 def next_biggest_prime(x):  
     for i in range(0,len(primes_under_1k)):
         if primes_under_1k[i] > x:
@@ -238,14 +141,15 @@ def next_biggest_prime(x):
 #no longer TF-IDF values, just whether or not the word is in the hash. Then translated to a bit vector (number)
 # EX) doc = {0, 1.77, .02, 0} TF-IDF values --> doc {0,1,1,0} (word 2 and 3 are present in that doc) --> doc = 0110 = 6
 def bit_vectors_of_documents():
+    """
     #Use lab2 to get vectors (all ~21k samples)
     tfidf_larger,tfidf_smaller = lab2.get_feature_vectors()
     all_words = lab2.get_unique_words_in_tfidf_data(tfidf_smaller)
     all_class_labels = lab2.get_unique_class_labels_in_tfidf_data(tfidf_smaller) 
     word_vectors, vectorized_class_labels = lab2.get_training_samples_and_class_labels_vectors(tfidf_smaller, all_words, all_class_labels)
-    
+    """
     #Use lab4 to get vectors (5k samples)
-    #word_vectors,class_labels = lab4.get_sample_data(False,False)
+    word_vectors,class_labels = lab4.get_sample_data(False,False)
     
     for i in range(0,len(word_vectors)):        
         #convert tfidf values to booleans
